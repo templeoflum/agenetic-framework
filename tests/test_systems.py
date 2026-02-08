@@ -61,6 +61,16 @@ def _make_sample_state(input_data="test input") -> SystemState:
         "escalation_recommended": False, "escalation_confidence": 0.5,
         "matched_pattern_ids": [], "primed_associations": [],
     }
+    state["motor_output"] = {
+        "output_text": input_data if isinstance(input_data, str) else str(input_data),
+        "target_profile": {
+            "density": 0.8, "entropy": 3.5, "coherence": 0.7,
+            "periodicity": 0.0, "noise_floor": 0.0, "impedance": 0.0,
+            "token_count": 0, "vocabulary_richness": 0.0,
+        },
+        "strategies_applied": [],
+        "repair_passed": True,
+    }
     return state
 
 

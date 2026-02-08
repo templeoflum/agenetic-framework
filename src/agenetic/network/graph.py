@@ -36,6 +36,7 @@ class GraphState(TypedDict):
     threat_assessment: Any  # ThreatAssessment | None
     subconscious_output: Any  # SubconsciousOutput | None
     signal_pattern_cache: list
+    motor_output: Any  # MotorOutput | None
 
 
 def create_default_state(
@@ -69,6 +70,7 @@ def create_default_state(
         "threat_assessment": None,
         "subconscious_output": None,
         "signal_pattern_cache": [],
+        "motor_output": None,
     }
 
 
@@ -97,6 +99,7 @@ def _make_node(system: BaseSystem):
             "threat_assessment": state.get("threat_assessment"),
             "subconscious_output": state.get("subconscious_output"),
             "signal_pattern_cache": state.get("signal_pattern_cache", []),
+            "motor_output": state.get("motor_output"),
         }
 
         # Process.

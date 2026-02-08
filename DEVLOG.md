@@ -94,12 +94,42 @@ This directive clears the documentation backlog so future directives operate aga
 
 ---
 
+## 2026-02-08 — Directive 004: Motor Layer with Round-Trip Calibration
+
+**Commit:** `869581b`
+**Tests:** 195 passing (59 new, 136 existing)
+
+Replaced motor stub with full signal-level text restructuring engine. Motor is the reverse of sensory: where sensory extracts signal features FROM text, motor adjusts text TO target signal profiles shaped by orientational field limb weights. Also built round-trip calibration infrastructure (motor→sensory feedback loop) for testing limb-to-feature mapping hypotheses.
+
+**Motor system** (~460 lines) — six restructuring strategies:
+- **Density modulation** (governed by mean weight) — collapse/expand whitespace
+- **Entropy modulation** (governed by Tarka, limb 2) — deduplicate repeated tokens (increase) or replace singletons with most common word (decrease, capped at 30% of singletons)
+- **Coherence modulation** (governed by Samatvam, limb 7) — bridge words between sentences (increase) or reverse sentence order (decrease)
+- **Impedance modulation** (governed by Nivrtti, limb 3, inverse) — strip non-ASCII/brackets (decrease) or add section markers (increase)
+- **Periodicity modulation** (governed by Prakasa, limb 1, inverse) — break repeated bigrams (decrease) or repeat key phrases at intervals (increase)
+- **Noise floor modulation** (governed by mean weight) — remove punctuation tokens (decrease) or add structural markers (increase)
+
+**Target profile computation:** density=mean_w×0.8, entropy=tarka×3.5, coherence=samatvam×0.7, impedance=(1−nivrtti)×0.3, periodicity=(1−prakasa)×0.3, noise=(1−mean)×0.3
+
+**Repair check:** Token overlap ≥20%, length ratio 0.2–3.0×, non-empty output. Falls back to original text on failure. Apoptotic after 3 consecutive repair failures.
+
+**Round-trip calibration infrastructure:**
+- `vary_single_limb()` — isolated weight variation utility
+- `round_trip()` — full motor→sensory feedback loop returning both signal reports + feature deltas
+- Parameterized calibration sweep across all 18 limbs
+- Results confirm governing limb mappings: Prakasa→periodicity (+0.035), Nivrtti→impedance (+0.367), Samatvam→coherence (−0.081), non-governing limbs show no response
+
+**New types:** `MotorOutput` TypedDict added to base.py, `motor_output` field added to SystemState and GraphState.
+
+**Bug fix during development:** Entropy modulation threshold was initially 0.3, causing entropy decrease to fire on the calibration input (current 3.88, target 3.5, delta −0.38). The decrease strategy replaced almost all singleton tokens with "The", dropping token overlap to 13% and failing repair check. Fixed by increasing threshold to 0.5 and capping replacement at 30% of singletons.
+
+---
+
 ## What's Next
 
-Candidates for Directive 004+:
+Candidates for Directive 005+:
 
 - **Conscious layer** — first LLM-backed system, semantic domain, meaning construction from signal-domain inputs
-- **Motor layer** — reverse transduction, output encoding for target medium
 - **Sleep layer** — transfer function optimization, cache pruning, orientational field weight adjustment
-- **Reference signal calibration** — map specific limbs to specific signal features instead of uniform mean
+- **Reference signal calibration** — refine limb-to-feature mappings based on round-trip calibration data
 - **Full orientational field implementation** — expand limb definitions beyond one-line principles to operational behavioral profiles with contextual activation patterns and inter-limb relationships

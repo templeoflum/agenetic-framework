@@ -133,6 +133,15 @@ class SubconsciousOutput(TypedDict):
     primed_associations: list[str]
 
 
+class MotorOutput(TypedDict):
+    """Structured output of the motor/output system."""
+
+    output_text: str
+    target_profile: SignalFeatures  # what motor was aiming for
+    strategies_applied: list[str]   # which restructuring strategies fired
+    repair_passed: bool             # did output pass motor's own repair check
+
+
 class SystemState(TypedDict):
     """The shared state object passed between all systems in the network.
 
@@ -149,6 +158,7 @@ class SystemState(TypedDict):
     threat_assessment: ThreatAssessment | None
     subconscious_output: SubconsciousOutput | None
     signal_pattern_cache: list[CachedSignalPattern]
+    motor_output: MotorOutput | None
 
 
 class BaseSystem(ABC):
