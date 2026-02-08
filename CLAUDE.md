@@ -67,25 +67,33 @@ The orientational field (Asparśa Yoga principles) pervades all systems as a sha
 
 ```
 agenetic-framework/
-├── CLAUDE.md              ← You are here
-├── README.md              ← Public-facing project description
+├── DEVLOG.md                        # What was built and why (repo memory)
+├── PLANNING_LOG.md                  # Decisions, rationale, open threads (chat memory)
+├── CLAUDE.md                        # Agent orientation (this file)
+├── README.md                        # Project description and status
+├── pyproject.toml                   # Python project config
 ├── docs/
-│   ├── ARCHITECTURE.md            ← Full v2 framework specification
-│   ├── DIRECTIVES.md              ← How the directive system works
-│   ├── architecture_amendment.md  ← Signal-semantics boundary
-│   └── signal_report_structure.md ← Signal report TypedDict spec
-├── handoff/               ← Directive/response exchange files
-│   ├── 001_directive.md
-│   ├── 001_response.md
-│   ├── 002_directive.md
-│   └── 002_response.md
-├── references/            ← Background material, Asparśa spec, etc.
-├── src/                   ← Source code
-│   └── agenetic/
-│       ├── __init__.py
-│       ├── systems/       ← The seven systems
-│       ├── network/       ← Topology, connections, routing
-│       ├── field/         ← Orientational field implementation
-│       └── regulation/    ← Homeostasis, repair, apoptosis
+│   ├── ARCHITECTURE.md              # Full v2 framework specification
+│   ├── DIRECTIVES.md                # How the directive system works
+│   ├── architecture_amendment.md    # Signal-semantics boundary
+│   └── signal_report_structure.md   # Signal report TypedDict spec
+├── handoff/                         # Directive/response exchange files
+├── references/
+│   ├── asparsa_limbs.md             # 18 limb principles (genetic seed)
+│   ├── asparsa_yoga_scrolls.md      # Full yoga source text (~2240 lines)
+│   └── conceptual_archaeology.md    # Pattern extraction from concept docs
+├── src/agenetic/
+│   ├── systems/                     # The seven systems
+│   ├── network/                     # Topology, connections, routing
+│   ├── field/                       # Orientational field
+│   └── regulation/                  # Homeostasis, repair, apoptosis
 └── tests/
 ```
+
+## Reference Material
+
+The `references/` directory contains source material that informs architecture decisions:
+
+- **asparsa_limbs.md** — The 18 limb principles as encoded in the genetic seed. These are the one-line definitions used in `orientational.py`.
+- **asparsa_yoga_scrolls.md** — The full canonical source text for the Asparśa Yoga practice. Contains extended definitions, behavioral implications, and Ritual Practice questions for each limb. This is the authoritative source for limb-to-feature mapping work.
+- **conceptual_archaeology.md** — Synthesis of 8 earlier concept documents tracing the project's philosophical lineage from Hermetic principles through to the current Yogic framework. Contains preliminary limb-to-feature mapping across signal/semantic/meta domains. Treat mappings as hypotheses to be tested, not specifications to be implemented.
