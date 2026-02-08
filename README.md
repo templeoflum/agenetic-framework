@@ -44,12 +44,12 @@ The signal-domain tier and motor layer are implemented and operational:
 - Sensory system extracts six signal features from input, classifies signal type, computes delta from orientational field reference
 - Immune system performs innate threshold detection and adaptive pattern matching on signal reports
 - Subconscious system correlates signal patterns against cache, makes escalation decisions
-- Motor system restructures text toward target signal profiles shaped by orientational field limb weights (six strategies: density, entropy, coherence, impedance, periodicity, noise floor)
+- Motor system restructures text toward target signal profiles shaped by orientational field limb weights (10 strategies: 6 feature modulators + noise floor modulation via Śraddhā, transformation cap via Māyāvāda, suppression gate via Ārēka, threshold scaling via Svadharma, delta scaling via Kṣetra-Jñāna)
 - Round-trip calibration infrastructure: motor output → sensory → measure feature deltas, with parameterized limb weight variation for testing limb-to-feature mapping hypotheses
 - Weighted connection matrix defines all system-to-system communication paths
 - LangGraph orchestration with conditional routing (escalation → conscious, else → motor reflex)
 - Orientational field with all 18 Asparśa limbs, sleep-only write access enforced
-- 195 tests passing
+- 237 tests passing
 
 Conscious, sleep, and genetic remain stubs awaiting implementation.
 
@@ -96,7 +96,7 @@ All coordination happens through files in `handoff/`. Every directive is a cold 
 - Python 3.11+
 - LangGraph for orchestration
 - Anthropic API for LLM calls (conscious layer, not yet implemented)
-- pytest (195 tests)
+- pytest (237 tests)
 
 ## License
 

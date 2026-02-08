@@ -158,11 +158,49 @@ Migrated from monolithic PLANNING_LOG.md to entry-based planning structure. No c
 
 ---
 
+## 2026-02-08 — Directive 007: Motor Strategy Extension and Full Calibration Sweep
+
+**Tests:** 237 passing (42 new, 195 existing)
+
+Extended the motor with 5 new limb-specific strategies and rewrote Tarka entropy modulation. Ran two-point calibration sweep (0.0 and 0.5) across all 18 limbs.
+
+**New strategies implemented:**
+- **Śraddhā → noise floor modulation** (limb 5, inverse) — reassigned from mean weight to dedicated limb. "Don't replace mystery with noise."
+- **Māyāvāda → transformation magnitude cap** (limb 4, post-processing) — limits total output deviation. "Don't confuse map with source."
+- **Ārēka → output suppression gate** (limb 8, binary gate) — suppresses output for high-noise high-entropy input. "Some things must not be spoken."
+- **Svadharma → strategy selectivity** (limb 9, meta-strategy) — scales all strategy thresholds. "Act appropriately."
+- **Kṣetra-Jñāna → delta sensitivity** (limb 10, meta-strategy) — scales delta magnitude. "Truth depends on where you speak from."
+
+**Tarka rewrite:** Replaced token-level entropy modulation (append occurrence indices / replace singletons) with sentence-level restructuring (split at conjunctions/commas to increase, merge short sentences with connectives to decrease). The sentence-level approach preserves more original tokens naturally.
+
+**New MotorOutput field:** `transform_magnitude: float` (0.0–1.0) tracks how much output deviated from input.
+
+**Calibration results (two-point sweep: 0.0 and 0.5):**
+
+| Limb | Feature response | Status |
+|---|---|---|
+| Prakāśa | periodicity +0.0912 | Confirmed (both points) |
+| Tarka | entropy 0.0 | Still not registering — sentence-level merging produces same features |
+| Nivṛtti | impedance +0.3667 | Confirmed (both points) |
+| Māyāvāda | 0.0 | Cap inactive at default weight (expected) |
+| Śraddhā | noise_floor +0.0541 | **New, confirmed** |
+| Ātma-Vichāra | 0.0 | Uncategorized |
+| Samatvam | coherence −0.0263 | Confirmed, graded (0.0 at half-weight) |
+| Ārēka | 0.0 | Gate inactive for clean calibration text (expected) |
+| Svadharma | 0.0 | Threshold scaling is second-order (expected) |
+| Kṣetra-Jñāna | coherence +0.0854, periodicity −0.0588 | **New, second-order confirmed** |
+| Limbs 11–18 | 0.0 | Convergent cluster + semantic domain (expected) |
+
+**Tarka honest report:** Entropy modulation fires (strategy applied) but the resulting text feeds back the same signal features through sensory. The sentence-level merge/split approach is deterministic and preserves token overlap for repair check, but the structural changes don't produce distinguishable entropy values in the sensory measurement. This may need a fundamentally different approach — or it may be that Tarka's signal-level expression is inherently weak compared to semantic-level variety.
+
+**Motor architecture note:** The three novel strategy types (post-processing constraint, binary gate, meta-strategy) all work correctly. The motor can accommodate more than one-to-one feature modulators. Svadharma and Kṣetra-Jñāna's second-order effects are visible in the sweep — Kṣetra-Jñāna at 0.0 causes fewer strategies to fire (coherence_modulation only), which shifts multiple features.
+
+---
+
 ## What's Next
 
-Candidates for Directive 007+:
+Candidates for Directive 008+:
 
-- **Conscious layer** — first LLM-backed system, semantic domain, meaning construction from signal-domain inputs
-- **Tarka entropy tuning** — refine entropy modulation strategy to register in calibration
+- **Conscious layer** — first LLM-backed system, semantic domain. Now has clear requirements: 8-9 limbs need semantic processing, 5-limb convergent cluster needs differentiation
 - **Sleep layer** — transfer function optimization, cache pruning, orientational field weight adjustment
-- **Reference signal calibration** — refine limb-to-feature mappings based on round-trip calibration data
+- **Tarka investigation** — entropy modulation fires but doesn't produce distinct calibration signal; may need fundamentally different measurement approach

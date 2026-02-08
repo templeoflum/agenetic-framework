@@ -32,6 +32,11 @@ PRAKASA_ID = 1     # Periodicity modulation (inverse: more Prakasa = less forced
 TARKA_ID = 2       # Entropy modulation (more Tarka = more variety)
 NIVRTTI_ID = 3     # Impedance modulation (inverse: more Nivrtti = simpler output)
 SAMATVAM_ID = 7    # Coherence modulation (more Samatvam = more coherent)
+SRADDHA_ID = 5     # Noise floor modulation (inverse: more Sraddha = less noise)
+MAYAVADA_ID = 4    # Transformation magnitude cap (direct: more = less deviation from source)
+AREKA_ID = 8       # Output suppression gate (threshold: suppresses high-noise high-entropy)
+SVADHARMA_ID = 9   # Strategy selectivity (direct: more = higher thresholds)
+KSETRA_JNANA_ID = 10  # Delta sensitivity scaling (direct: more = respond to smaller deltas)
 
 
 def _get_limb_weight(field_state, limb_id: int) -> float:
@@ -73,13 +78,14 @@ def _compute_target_profile(field_state) -> SignalFeatures:
     samatvam_w = _get_limb_weight(field_state, SAMATVAM_ID)
     nivrtti_w = _get_limb_weight(field_state, NIVRTTI_ID)
     prakasa_w = _get_limb_weight(field_state, PRAKASA_ID)
+    sraddha_w = _get_limb_weight(field_state, SRADDHA_ID)
 
     return {
         "density": min(max(mean_w * 0.8, 0.0), 1.0),
         "entropy": max(tarka_w * 3.5, 0.0),
         "coherence": min(max(samatvam_w * 0.7, 0.0), 1.0),
         "periodicity": min(max((1.0 - prakasa_w) * 0.3, 0.0), 1.0),
-        "noise_floor": min(max((1.0 - mean_w) * 0.3, 0.0), 1.0),
+        "noise_floor": min(max((1.0 - sraddha_w) * 0.3, 0.0), 1.0),
         "impedance": min(max((1.0 - nivrtti_w) * 0.3, 0.0), 1.0),
         "token_count": 0,            # not directly targeted
         "vocabulary_richness": 0.0,   # derived from entropy strategy
@@ -117,10 +123,13 @@ def _modulate_density(text: str, target: float, current: float) -> str:
 
 
 def _modulate_entropy(text: str, target: float, current: float) -> str:
-    """Adjust vocabulary entropy toward target.
+    """Adjust vocabulary entropy toward target using sentence-level restructuring.
 
-    Higher entropy = more varied vocabulary (deduplicate repeated tokens).
-    Lower entropy = more constrained vocabulary (homogenize rare tokens).
+    Higher entropy = more structural variety (split sentences, vary openings).
+    Lower entropy = more uniformity (merge short sentences, normalize length).
+
+    Sentence-level approach preserves more original tokens than token-level
+    replacement, making the repair check easier to satisfy.
     """
     if not text:
         return text
@@ -133,34 +142,80 @@ def _modulate_entropy(text: str, target: float, current: float) -> str:
     if abs(delta) < 0.5:
         return text
 
+    # Split into sentences preserving terminators.
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    sentences = [s for s in sentences if s.strip()]
+
+    if not sentences:
+        return text
+
     if delta > 0:
-        # Increase entropy: make repeated tokens unique by appending
-        # occurrence index (deterministic, reversible labeling).
-        counts: dict[str, int] = {}
+        # Increase entropy: split longer sentences at conjunctions/commas
+        # to create more structural variety.
         result = []
-        for token in tokens:
-            counts[token] = counts.get(token, 0) + 1
-            if counts[token] > 1:
-                result.append(f"{token}-{counts[token]}")
+        conjunctions = {'and', 'but', 'or', 'yet', 'so', 'while', 'when',
+                        'because', 'although', 'which', 'where', 'that'}
+        for sent in sentences:
+            # Try splitting at commas first.
+            comma_parts = sent.split(', ')
+            if len(comma_parts) >= 2:
+                # Turn comma-separated clauses into separate sentences.
+                for j, part in enumerate(comma_parts):
+                    part = part.strip()
+                    if not part:
+                        continue
+                    # Capitalize first word of new sentence.
+                    part = part[0].upper() + part[1:] if len(part) > 1 else part.upper()
+                    # Add period if the part doesn't end with punctuation.
+                    if part and part[-1] not in '.!?':
+                        part += '.'
+                    result.append(part)
             else:
-                result.append(token)
+                # Try splitting at conjunctions.
+                words = sent.split()
+                split_indices = [i for i, w in enumerate(words)
+                                 if w.lower().rstrip('.,;:') in conjunctions and i > 1]
+                if split_indices:
+                    idx = split_indices[0]
+                    first_part = ' '.join(words[:idx]).rstrip('.,;:')
+                    if first_part and first_part[-1] not in '.!?':
+                        first_part += '.'
+                    second_part = ' '.join(words[idx + 1:])
+                    if second_part:
+                        second_part = second_part[0].upper() + second_part[1:] if len(second_part) > 1 else second_part.upper()
+                        if second_part[-1] not in '.!?':
+                            second_part += '.'
+                        result.append(first_part)
+                        result.append(second_part)
+                    else:
+                        result.append(sent)
+                else:
+                    result.append(sent)
         return ' '.join(result)
     else:
-        # Decrease entropy: replace a fraction of rare tokens with the
-        # most common token. Capped at 30% of singletons to preserve
-        # content for repair check.
-        freq = Counter(tokens)
-        most_common = freq.most_common(1)[0][0]
-        singletons = [i for i, t in enumerate(tokens)
-                       if freq[t] == 1 and t != most_common and i > 0]
-        max_replacements = max(1, len(singletons) // 3)
-        result = list(tokens)
-        replaced = 0
-        for idx in singletons:
-            if replaced >= max_replacements:
-                break
-            result[idx] = most_common
-            replaced += 1
+        # Decrease entropy: merge short sentences with connectives
+        # to create more uniform structure.
+        connectives = ['and', 'which', 'where', 'while']
+        result = []
+        i = 0
+        while i < len(sentences):
+            current_sent = sentences[i].rstrip()
+            # If next sentence exists and current is short, merge them.
+            if (i + 1 < len(sentences)
+                    and len(current_sent.split()) <= 8):
+                # Strip terminal punctuation from first sentence for merging.
+                merged_first = current_sent.rstrip('.!?')
+                connective = connectives[i % len(connectives)]
+                next_sent = sentences[i + 1].strip()
+                # Lowercase the start of the merged second sentence.
+                if next_sent and next_sent[0].isupper():
+                    next_sent = next_sent[0].lower() + next_sent[1:]
+                merged = f"{merged_first} {connective} {next_sent}"
+                result.append(merged)
+                i += 2
+            else:
+                result.append(current_sent)
+                i += 1
         return ' '.join(result)
 
 
@@ -308,6 +363,78 @@ def _modulate_noise_floor(text: str, target: float, current: float) -> str:
 
 
 # ============================================================
+# Transformation measurement and blending
+# ============================================================
+
+
+def _compute_transform_magnitude(original: str, output: str) -> float:
+    """Measure how much output deviated from original (0.0–1.0).
+
+    Returns 1.0 - token_overlap_ratio. At 0.0, output is identical.
+    At 1.0, no tokens overlap.
+    """
+    if not original or not output:
+        return 1.0 if original != output else 0.0
+    orig_tokens = original.lower().split()
+    out_tokens = output.lower().split()
+    if not orig_tokens:
+        return 0.0
+    orig_set = set(orig_tokens)
+    out_set = set(out_tokens)
+    overlap = len(orig_set & out_set) / len(orig_set)
+    return 1.0 - overlap
+
+
+def _blend_toward_original(
+    original: str, output: str, max_allowed: float, current_magnitude: float
+) -> str:
+    """Blend output back toward original to respect Māyāvāda cap.
+
+    Takes proportional mix of original tokens and output tokens.
+    """
+    orig_tokens = original.split()
+    out_tokens = output.split()
+    if not orig_tokens or not out_tokens:
+        return original
+
+    # Compute blend ratio: how much of the output to keep.
+    # If max_allowed is 0.2 and current_magnitude is 0.5,
+    # keep 0.2/0.5 = 40% of output changes.
+    blend_ratio = max_allowed / current_magnitude if current_magnitude > 0 else 0.0
+    blend_ratio = min(max(blend_ratio, 0.0), 1.0)
+
+    # Use the shorter length to avoid index errors.
+    min_len = min(len(orig_tokens), len(out_tokens))
+    result = []
+    for i in range(min_len):
+        if orig_tokens[i] == out_tokens[i]:
+            result.append(orig_tokens[i])
+        else:
+            # Keep output token for the first blend_ratio fraction of changes.
+            # Deterministic: count how many changes we've seen so far.
+            changes_before = sum(
+                1 for j in range(i) if j < len(orig_tokens) and j < len(out_tokens)
+                and orig_tokens[j] != out_tokens[j]
+            )
+            total_changes = sum(
+                1 for j in range(min_len)
+                if orig_tokens[j] != out_tokens[j]
+            )
+            if total_changes > 0 and changes_before < int(total_changes * blend_ratio):
+                result.append(out_tokens[i])
+            else:
+                result.append(orig_tokens[i])
+
+    # Append remaining tokens from whichever is longer, blended.
+    if len(out_tokens) > min_len and blend_ratio > 0.5:
+        result.extend(out_tokens[min_len:])
+    elif len(orig_tokens) > min_len:
+        result.extend(orig_tokens[min_len:])
+
+    return ' '.join(result)
+
+
+# ============================================================
 # Motor system
 # ============================================================
 
@@ -350,6 +477,7 @@ class MotorSystem(BaseSystem):
                 "target_profile": target,
                 "strategies_applied": [],
                 "repair_passed": True,
+                "transform_magnitude": 0.0,
             }
             return {**state, "motor_output": motor_output}
 
@@ -364,45 +492,113 @@ class MotorSystem(BaseSystem):
                 "token_count": len(text.split()), "vocabulary_richness": 0.5,
             }
 
+        # --- Ārēka suppression gate (B3) ---
+        # Applied BEFORE other strategies. If active, suppress entirely.
+        areka_w = _get_limb_weight(field_state, AREKA_ID)
+        if areka_w > 0.8:
+            input_noise = current["noise_floor"]
+            input_entropy = current["entropy"]
+            if input_noise > 0.3 and input_entropy > 5.0:
+                motor_output = {
+                    "output_text": "",
+                    "target_profile": target,
+                    "strategies_applied": ["areka_suppression"],
+                    "repair_passed": True,
+                    "transform_magnitude": 1.0,
+                }
+                return {**state, "motor_output": motor_output}
+
+        # --- Svadharma threshold scaling (B4) and Kṣetra-Jñāna delta scaling (B5) ---
+        svadharma_w = _get_limb_weight(field_state, SVADHARMA_ID)
+        threshold_scale = 0.5 + svadharma_w  # At 1.0: 1.5x; at 0.0: 0.5x
+        ksetra_w = _get_limb_weight(field_state, KSETRA_JNANA_ID)
+        delta_scale = 0.5 + ksetra_w * 0.5   # At 1.0: 1.0; at 0.0: 0.5
+
         # Apply strategies in order. Track which fired.
         strategies: list[str] = []
         output = text
 
+        # Strategy thresholds (base values, scaled by Svadharma).
+        density_thresh = 0.05 * threshold_scale
+        entropy_thresh = 0.5 * threshold_scale
+        coherence_thresh = 0.1 * threshold_scale
+        impedance_thresh = 0.05 * threshold_scale
+        periodicity_thresh = 0.05 * threshold_scale
+        noise_thresh = 0.05 * threshold_scale
+
         # 1. Density modulation (mean weight).
+        density_delta = (target["density"] - current["density"]) * delta_scale
         prev = output
-        output = _modulate_density(output, target["density"], current["density"])
+        output = _modulate_density(output, current["density"] + density_delta, current["density"])
         if output != prev:
             strategies.append("density_modulation")
 
-        # 2. Entropy modulation (Tarka).
+        # 2. Entropy modulation (Tarka) — sentence-level.
+        entropy_delta = (target["entropy"] - current["entropy"]) * delta_scale
         prev = output
-        output = _modulate_entropy(output, target["entropy"], current["entropy"])
+        # Pass scaled target: current + scaled delta. The function uses its
+        # own threshold internally, so we adjust the target to reflect scaling.
+        adjusted_entropy_target = current["entropy"] + entropy_delta
+        if abs(entropy_delta) >= entropy_thresh:
+            output = _modulate_entropy(output, adjusted_entropy_target, current["entropy"])
         if output != prev:
             strategies.append("entropy_modulation")
 
         # 3. Coherence modulation (Samatvam).
+        coherence_delta = (target["coherence"] - current["coherence"]) * delta_scale
         prev = output
-        output = _modulate_coherence(output, target["coherence"], current["coherence"])
+        if abs(coherence_delta) >= coherence_thresh:
+            output = _modulate_coherence(
+                output, current["coherence"] + coherence_delta, current["coherence"]
+            )
         if output != prev:
             strategies.append("coherence_modulation")
 
         # 4. Impedance modulation (Nivrtti).
+        impedance_delta = (target["impedance"] - current["impedance"]) * delta_scale
         prev = output
-        output = _modulate_impedance(output, target["impedance"], current["impedance"])
+        if abs(impedance_delta) >= impedance_thresh:
+            output = _modulate_impedance(
+                output, current["impedance"] + impedance_delta, current["impedance"]
+            )
         if output != prev:
             strategies.append("impedance_modulation")
 
         # 5. Periodicity modulation (Prakasa).
+        periodicity_delta = (target["periodicity"] - current["periodicity"]) * delta_scale
         prev = output
-        output = _modulate_periodicity(output, target["periodicity"], current["periodicity"])
+        if abs(periodicity_delta) >= periodicity_thresh:
+            output = _modulate_periodicity(
+                output, current["periodicity"] + periodicity_delta, current["periodicity"]
+            )
         if output != prev:
             strategies.append("periodicity_modulation")
 
-        # 6. Noise floor modulation (mean weight).
+        # 6. Noise floor modulation (Sraddha).
+        noise_delta = (target["noise_floor"] - current["noise_floor"]) * delta_scale
         prev = output
-        output = _modulate_noise_floor(output, target["noise_floor"], current["noise_floor"])
+        if abs(noise_delta) >= noise_thresh:
+            output = _modulate_noise_floor(
+                output, current["noise_floor"] + noise_delta, current["noise_floor"]
+            )
         if output != prev:
             strategies.append("noise_floor_modulation")
+
+        # --- Māyāvāda transformation cap (B2) ---
+        # Applied AFTER all 6 feature strategies, BEFORE repair check.
+        mayavada_w = _get_limb_weight(field_state, MAYAVADA_ID)
+        transform_magnitude = _compute_transform_magnitude(text, output)
+
+        if mayavada_w < 0.95:
+            max_allowed = 1.0 - mayavada_w
+            if transform_magnitude > max_allowed and max_allowed > 0.0:
+                output = _blend_toward_original(text, output, max_allowed, transform_magnitude)
+                strategies.append("mayavada_cap")
+                transform_magnitude = _compute_transform_magnitude(text, output)
+            elif max_allowed == 0.0:
+                output = text
+                strategies.append("mayavada_cap")
+                transform_magnitude = 0.0
 
         # Repair check: verify output preserves content adequately.
         repair_passed = self._check_output_quality(text, output)
@@ -412,6 +608,7 @@ class MotorSystem(BaseSystem):
             # Fall back to original text on repair failure.
             output = text
             strategies = ["fallback_to_original"]
+            transform_magnitude = 0.0
         else:
             self._consecutive_repair_failures = 0
 
@@ -420,6 +617,7 @@ class MotorSystem(BaseSystem):
             "target_profile": target,
             "strategies_applied": strategies,
             "repair_passed": repair_passed,
+            "transform_magnitude": transform_magnitude,
         }
 
         return {**state, "motor_output": motor_output}

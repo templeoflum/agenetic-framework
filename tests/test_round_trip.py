@@ -13,7 +13,19 @@ import pytest
 
 from agenetic.field.orientational import OrientationalField
 from agenetic.network.graph import create_default_state
-from agenetic.systems.motor import MotorSystem, _compute_target_profile
+from agenetic.systems.motor import (
+    MotorSystem,
+    _compute_target_profile,
+    PRAKASA_ID,
+    TARKA_ID,
+    NIVRTTI_ID,
+    SAMATVAM_ID,
+    SRADDHA_ID,
+    MAYAVADA_ID,
+    AREKA_ID,
+    SVADHARMA_ID,
+    KSETRA_JNANA_ID,
+)
 from agenetic.systems.sensory import SensorySystem
 from agenetic.systems.sleep import SleepSystem
 
@@ -232,6 +244,36 @@ class TestCalibrationSweep:
         _print_calibration_record(record)
 
 
+@pytest.mark.parametrize("limb_id", ALL_LIMB_IDS)
+class TestCalibrationSweepHalf:
+    """Parameterized calibration: vary each limb to 0.5 and record feature deltas.
+
+    Second sweep point for graded vs binary response analysis.
+    """
+
+    def test_limb_weight_half(self, limb_id, baseline_result):
+        """Set one limb to 0.5, hold others at 1.0. Record feature deltas vs baseline."""
+        field = vary_single_limb(limb_id, 0.5)
+        result = round_trip(CALIBRATION_INPUT, field)
+
+        baseline_features = baseline_result["output_report"]["features"]
+        varied_features = result["output_report"]["features"]
+        relative_deltas = {}
+        for key in FEATURE_KEYS:
+            relative_deltas[key] = varied_features[key] - baseline_features[key]
+
+        record = {
+            "limb_name": _LIMB_NAMES[limb_id],
+            "weight_value": 0.5,
+            "feature_deltas": relative_deltas,
+        }
+
+        assert result["output_report"] is not None
+        assert result["motor_output"]["output_text"] is not None
+
+        _print_calibration_record(record)
+
+
 def _print_calibration_record(record: dict) -> None:
     """Print a structured calibration record for analysis."""
     name = record["limb_name"]
@@ -243,56 +285,86 @@ def _print_calibration_record(record: dict) -> None:
     print(f"  [{name} @ {weight}] {delta_str}")
 
 
+def _run_sweep_at_weight(weight: float, baseline_features: dict) -> list[dict]:
+    """Run calibration sweep at a specific weight point. Returns list of results."""
+    results = []
+    for limb_id in ALL_LIMB_IDS:
+        name = _LIMB_NAMES[limb_id]
+        field = vary_single_limb(limb_id, weight)
+        result = round_trip(CALIBRATION_INPUT, field)
+
+        # Handle Ārēka suppression: if output is empty, use zero features.
+        motor_out = result["motor_output"]
+        if motor_out["output_text"] == "" and "areka_suppression" in motor_out.get("strategies_applied", []):
+            varied_features = {k: 0.0 for k in FEATURE_KEYS}
+            suppressed = True
+        else:
+            varied_features = result["output_report"]["features"]
+            suppressed = False
+
+        deltas = {}
+        for key in FEATURE_KEYS:
+            deltas[key] = varied_features[key] - baseline_features[key]
+
+        results.append({
+            "limb_name": name,
+            "limb_id": limb_id,
+            "weight_value": weight,
+            "feature_deltas": deltas,
+            "strategies_applied": motor_out["strategies_applied"],
+            "suppressed": suppressed,
+            "transform_magnitude": motor_out.get("transform_magnitude", 0.0),
+        })
+    return results
+
+
 def test_calibration_summary():
     """Run full calibration sweep and print summary table.
 
     This is the experimental output for the planning instance to analyze.
-    Varies each of the 18 limbs to weight=0.0 (suppressed) while holding
+    Varies each of the 18 limbs to weight=0.0 and weight=0.5 while holding
     all others at baseline=1.0, then measures feature deltas in motor
-    output relative to the all-1.0 baseline.
+    output relative to the all-1.0 baseline. Two data points per limb.
     """
     # Baseline: all weights at 1.0.
     field_baseline = OrientationalField()
     baseline = round_trip(CALIBRATION_INPUT, field_baseline)
     baseline_features = baseline["output_report"]["features"]
 
-    # Header.
-    header = f"{'Limb varied':<20}" + " | ".join(f"{k:>12}" for k in FEATURE_KEYS)
-    sep = "-" * len(header)
-    print(f"\n{'=' * len(header)}")
-    print("CALIBRATION SWEEP: Limb weight 1.0 -> 0.0 (baseline -> suppressed)")
-    print(f"{'=' * len(header)}")
-    print(header)
-    print(sep)
+    all_results = []
 
-    results = []
-    for limb_id in ALL_LIMB_IDS:
-        name = _LIMB_NAMES[limb_id]
-        field = vary_single_limb(limb_id, 0.0)
-        result = round_trip(CALIBRATION_INPUT, field)
-        varied_features = result["output_report"]["features"]
+    for sweep_weight in [0.0, 0.5]:
+        # Header.
+        header = f"{'Limb varied':<20}" + " | ".join(f"{k:>12}" for k in FEATURE_KEYS) + " | strategies"
+        sep = "-" * len(header)
+        print(f"\n{'=' * len(header)}")
+        print(f"CALIBRATION SWEEP: Limb weight 1.0 -> {sweep_weight} (baseline -> varied)")
+        print(f"{'=' * len(header)}")
+        print(header)
+        print(sep)
 
-        deltas = {}
-        for key in FEATURE_KEYS:
-            deltas[key] = varied_features[key] - baseline_features[key]
+        results = _run_sweep_at_weight(sweep_weight, baseline_features)
+        for r in results:
+            name = r["limb_name"]
+            deltas = r["feature_deltas"]
+            strategies = r["strategies_applied"]
+            suppressed = r["suppressed"]
+            label = f"{name} ({sweep_weight})"
+            if suppressed:
+                label += " [SUP]"
+            row = f"{label:<20}" + " | ".join(
+                f"{deltas[k]:>+12.4f}" for k in FEATURE_KEYS
+            ) + f" | {', '.join(strategies)}"
+            print(row)
 
-        row = f"{name + ' (0.0)':<20}" + " | ".join(
-            f"{deltas[k]:>+12.4f}" for k in FEATURE_KEYS
-        )
-        print(row)
+        print(sep)
+        all_results.extend(results)
 
-        results.append({
-            "limb_name": name,
-            "limb_id": limb_id,
-            "weight_value": 0.0,
-            "feature_deltas": deltas,
-        })
-
-    print(sep)
-    print(f"Total limbs tested: {len(results)}")
+    print(f"\nTotal sweep points: {len(all_results)} ({len(all_results)//18} per limb × 18 limbs)")
     print(f"Baseline features: " + " | ".join(
         f"{k}: {baseline_features[k]:.4f}" for k in FEATURE_KEYS
     ))
+    print(f"Baseline strategies: {baseline['motor_output']['strategies_applied']}")
 
-    # Assert we tested all 18 limbs.
-    assert len(results) == 18
+    # Assert we tested all 18 limbs at both weight points.
+    assert len(all_results) == 36

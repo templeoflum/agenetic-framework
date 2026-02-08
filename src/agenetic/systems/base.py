@@ -140,6 +140,7 @@ class MotorOutput(TypedDict):
     target_profile: SignalFeatures  # what motor was aiming for
     strategies_applied: list[str]   # which restructuring strategies fired
     repair_passed: bool             # did output pass motor's own repair check
+    transform_magnitude: float      # how much output deviated from input (0.0–1.0)
 
 
 class SystemState(TypedDict):
