@@ -256,10 +256,43 @@ All other limbs: zero delta at both 0.0 and 1.0 (no motor strategies assigned).
 
 ---
 
+## 2026-02-08 — Directive 009: Comprehensive Mechanical Audit
+
+**Tests:** 237 passing (no change — zero code modifications)
+
+Full codebase audit before crossing into the semantic domain. Read every source file (16), every test file (6), every documentation file (5+), and pyproject.toml. Produced 12-section audit report at `handoff/009_audit_report.md`.
+
+**No code was changed.** This directive was read-only by design — "find problems" and "fix problems" must not happen in the same pass.
+
+**Key findings (raw data for conceptual audit):**
+
+| Category | Finding |
+|---|---|
+| Interface compliance | 3 stub systems return state by reference (mutation risk) |
+| State flow | `subconscious_output` written but never consumed; `metadata.timestamps` dead field |
+| Type consistency | `_make_sample_state()` missing `transform_magnitude` |
+| Test baseline | `test_motor.py::_vary_single_limb` still uses `baseline=1.0` (D008 miss) |
+| Tautological tests | `test_low_mayavada_constrains_output` body is `pass`; 4 tests assert only `repair_passed` or `isinstance` |
+| Dead code | Unused `dataclass` import in base.py; duplicated `_to_str()` and `_euclidean_distance()` |
+| Documentation drift | ARCHITECTURE.md status stale; amendment/signal_report still say "Proposed"; README tree stale |
+| Determinism | Immune uses `datetime.now()` for timestamps (non-deterministic) |
+| Stale reference | test_graph.py comment references field reference of 1.0 (now 0.5) |
+
+**Verified correct:**
+- Write access constraints (no violations)
+- Calibration apparatus (measures what it claims)
+- All 18 limbs consistent across field, motor constants, and test references
+- All 10 motor strategies deterministic
+- Connection matrix matches topology module
+
+**What this directive did NOT do:** Interpret findings. The planning instance will analyze the audit report in a fresh context (conceptual audit) to evaluate concerns about circular reasoning in calibration, self-fulfilling limb mappings, the convergent cluster, and Tarka resistance.
+
+---
+
 ## What's Next
 
-Candidates for Directive 009+:
+Candidates for Directive 010+:
 
-- **Conscious layer** — first LLM-backed system. Clean calibration data at correct midpoint, 8-9 limbs confirmed as needing semantic processing, convergent cluster (8 limbs) needs differentiation
-- **Sleep layer** — transfer function optimization, cache pruning, orientational field weight adjustment
-- **Tarka investigation** — three approaches failed (token-level D004, sentence-level D007, midpoint rebalance D008). Accept as semantic-domain or fundamentally rethink
+- **Conceptual audit** — planning instance analyzes 009_audit_report.md in fresh context for circular reasoning, self-fulfilling prophecies, and architectural assumptions
+- **Fix directive** — address mechanical audit findings (triage by planning instance based on conceptual audit)
+- **Conscious layer** — first LLM-backed system, after audit clears. Clean calibration data at correct midpoint, 8-9 limbs confirmed as needing semantic processing, convergent cluster (8 limbs) needs differentiation
