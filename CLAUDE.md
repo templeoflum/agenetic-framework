@@ -31,6 +31,18 @@ All coordination happens through files in `handoff/`:
 5. Planning instance reads the response and changed files directly from GitHub
 6. Planning instance writes next directive based on results
 
+### Planning State Management
+
+Each directive cycle, the planning instance provides two files in `handoff/`:
+- `NNN_directive.md` — what to build
+- `state.md` — planning notes for this cycle (decisions, observations, rationale)
+
+`state.md` is transient — overwritten each cycle. After completing a directive, DNAgent:
+1. Copies `handoff/state.md` to `planning/NNN_<short_name>.md` (permanent numbered entry, never overwritten)
+2. Updates `planning/CURRENT.md` from actual repo inspection (test counts, system status, blockers)
+
+`CURRENT.md` is the factual snapshot — always populated from ground truth, not copied from old docs. DNAgent reads it at the start of every directive for orientation.
+
 ### Key Rules for DNAgent
 
 - **Read the directive fully before acting.** Don't start executing partway through.
@@ -68,16 +80,22 @@ The orientational field (Asparśa Yoga principles) pervades all systems as a sha
 ```
 agenetic-framework/
 ├── DEVLOG.md                        # What was built and why (repo memory)
-├── PLANNING_LOG.md                  # Decisions, rationale, open threads (chat memory)
 ├── CLAUDE.md                        # Agent orientation (this file)
 ├── README.md                        # Project description and status
 ├── pyproject.toml                   # Python project config
+├── planning/                        # Planning state (entry-based)
+│   ├── CURRENT.md                   # Factual snapshot — DNAgent maintains from repo inspection
+│   ├── 001_through_005_legacy.md    # Archived monolithic planning log
+│   └── NNN_<short_name>.md          # Numbered planning entries (one per cycle, never rewritten)
 ├── docs/
 │   ├── ARCHITECTURE.md              # Full v2 framework specification
 │   ├── DIRECTIVES.md                # How the directive system works
 │   ├── architecture_amendment.md    # Signal-semantics boundary
 │   └── signal_report_structure.md   # Signal report TypedDict spec
-├── handoff/                         # Directive/response exchange files
+├── handoff/                         # Directive/response/state exchange files
+│   ├── NNN_directive.md             # Instructions from planning instance
+│   ├── NNN_response.md              # DNAgent's completion report
+│   └── state.md                     # Transient planning notes (overwritten each cycle)
 ├── references/
 │   ├── asparsa_limbs.md             # 18 limb principles (genetic seed)
 │   ├── asparsa_yoga_scrolls.md      # Full yoga source text (~2240 lines)

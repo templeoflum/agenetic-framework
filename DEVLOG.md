@@ -144,11 +144,25 @@ Cleanup pass. No code changes.
 
 ---
 
+## 2026-02-08 — Directive 006: Planning Infrastructure Migration
+
+Tests: No change (195 passing)
+
+Migrated from monolithic PLANNING_LOG.md to entry-based planning structure. No code changes.
+
+**New structure:** `planning/` directory with numbered entries (one per planning session, never rewritten) and `CURRENT.md` (factual snapshot maintained by DNAgent from repo inspection).
+
+**New workflow:** Each directive cycle, the planning instance provides a state file alongside the directive. DNAgent saves it as a numbered entry and extracts factual state into CURRENT.md. This replaces the monolithic planning log that was being fully rewritten every cycle.
+
+**Files:** Created `planning/` directory. Moved PLANNING_LOG.md → `planning/001_through_005_legacy.md`. Created `planning/006_planning_infrastructure.md` (first entry in new format). Created `planning/CURRENT.md` (factual snapshot). Updated CLAUDE.md and docs/DIRECTIVES.md to describe new pattern.
+
+---
+
 ## What's Next
 
-Candidates for Directive 006+:
+Candidates for Directive 007+:
 
 - **Conscious layer** — first LLM-backed system, semantic domain, meaning construction from signal-domain inputs
-- **Sleep layer** — transfer function optimization, cache pruning, orientational field weight adjustment
 - **Tarka entropy tuning** — refine entropy modulation strategy to register in calibration
+- **Sleep layer** — transfer function optimization, cache pruning, orientational field weight adjustment
 - **Reference signal calibration** — refine limb-to-feature mappings based on round-trip calibration data

@@ -131,6 +131,19 @@ differently than expected.
 | `src/agenetic/systems/sensory.py` | Created | ... |
 ```
 
+## State File
+
+Starting from Directive 006, the planning instance provides `handoff/state.md` alongside each directive. This is a transient exchange document containing planning notes for that cycle: decisions made, observations, rationale, sequencing context.
+
+**DNAgent's responsibilities with the state file:**
+
+1. **Save as numbered entry:** Copy `handoff/state.md` to `planning/NNN_<short_name>.md` (permanent record, never overwritten)
+2. **Update CURRENT.md:** Extract factual state into `planning/CURRENT.md` from actual repo inspection (run tests, check system status, count files)
+
+`handoff/state.md` is overwritten each cycle by the planning instance. The numbered entries in `planning/` are the permanent record. `CURRENT.md` is the slim factual snapshot that the planning instance reads to orient at the start of each cycle.
+
+**Key principle:** `CURRENT.md` is populated from ground truth (actual `pytest` output, actual source file inspection), not copied from previous documentation. This prevents accuracy drift.
+
 ## Numbering
 
 Directives are numbered sequentially: 001, 002, 003, etc. Responses share the same number as their directive. No gaps in numbering. If a directive is abandoned before completion, the response should note this.
