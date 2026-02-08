@@ -244,7 +244,7 @@ class SensorySystem(BaseSystem):
         if limbs:
             reference = sum(limb["weight"] for limb in limbs) / len(limbs)
         else:
-            reference = 1.0
+            reference = 0.5
 
         density_delta = features["density"] - reference
         entropy_delta = features["entropy"] - reference

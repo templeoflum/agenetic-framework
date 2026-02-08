@@ -197,10 +197,69 @@ Extended the motor with 5 new limb-specific strategies and rewrote Tarka entropy
 
 ---
 
+## 2026-02-08 — Directive 008: Midpoint Weight Migration and Recalibration
+
+**Tests:** 237 passing (no new tests, 5 expectations updated)
+
+Migrated all 18 orientational field limb weights from 1.0 to 0.5 and rebalanced the entire motor target profile system. This is the first directive that changes operating conditions of already-working systems rather than building new ones.
+
+**Rationale:** 0.5 is the point of maximum information entropy on a 0-to-1 scale — the most receptive state, equally capable of amplification or suppression. At 1.0, every limb was maxed out with nowhere to go but down. The 0.5 midpoint model allows symmetric bidirectional modulation and aligns with the yoga's principle of receptive openness (Prakāśa).
+
+**Formula restructuring:** Adopted symmetric `target = base + (weight - 0.5) * scale` pattern:
+
+| Feature | Old formula (1.0) | New formula (0.5) | At 0.5 |
+|---|---|---|---|
+| density | `mean_w * 0.8` | `0.8 + (mean_w - 0.5) * 0.4` | 0.8 |
+| entropy | `tarka * 3.5` | `3.5 + (tarka_w - 0.5) * 3.0` | 3.5 |
+| coherence | `samatvam * 0.7` | `0.35 + (samatvam_w - 0.5) * 0.7` | 0.35 |
+| periodicity | `(1.0 - prakasa) * 0.3` | `(0.5 - prakasa_w) * 0.6` | 0.0 |
+| noise_floor | `(1.0 - sraddha) * 0.3` | `(0.5 - sraddha_w) * 0.6` | 0.0 |
+| impedance | `(1.0 - nivrtti) * 0.3` | `(0.5 - nivrtti_w) * 0.6` | 0.0 |
+
+**Threshold adjustments:**
+- Ārēka gate: `areka_w > 0.8` → `areka_w > 0.3` (active range now includes above-midpoint values)
+- Māyāvāda cap: `mayavada_w < 0.95` → `mayavada_w < 0.45` (active below midpoint)
+- Sensory reference fallback: 1.0 → 0.5
+- Motor helper fallbacks: 1.0 → 0.5
+
+**Three-point calibration sweep (0.0, 0.5, 1.0):**
+
+Baseline check: All limbs at 0.5 produce zero delta (correct).
+
+Suppression (weight → 0.0):
+```
+Limb              density   entropy   coherence  periodicity  noise_floor  impedance  strategies
+Prakasa          +0.0119   -0.0768   +0.0345    +0.0912      +0.0000      +0.0000    entropy, coherence, periodicity
+Nivrtti          -0.0041   +0.1646   -0.0143    -0.0048      +0.0000      +0.3667    entropy, coherence, impedance
+Samatvam         -0.0011   -0.0595   -0.0263    +0.0037      +0.0000      +0.0000    entropy, coherence
+Sraddha          -0.0067   +0.0576   +0.0175    -0.0033      +0.0541      +0.0000    entropy, coherence, noise_floor
+Ksetra-Jnana     -0.0006   -0.0946   +0.0345    -0.0588      +0.0000      +0.0000    (none - delta scaled to zero)
+```
+
+Amplification (weight → 1.0):
+```
+Limb              density   entropy   coherence  periodicity  noise_floor  impedance  strategies
+Tarka            +0.0019   +0.0244   +0.0854    -0.0588      +0.0000      +0.0000    coherence
+Svadharma        -0.0006   -0.0946   +0.0345    -0.0588      +0.0000      +0.0000    (none - threshold too high)
+```
+
+All other limbs: zero delta at both 0.0 and 1.0 (no motor strategies assigned).
+
+**Comparison with 1.0 baseline data (Directive 007):**
+- Same 5 primary mappings confirmed: Prakāśa→periodicity, Nivṛtti→impedance, Samatvam→coherence, Śraddhā→noise_floor, Kṣetra-Jñāna→second-order
+- Tarka still does not register as entropy change despite sentence-level approach and new formula
+- Asymmetric response pattern: suppression (0.0) produces more visible effects than amplification (1.0), because baseline strategies already fire at 0.5
+- Meta-strategies (Svadharma, Kṣetra-Jñāna) now clearly visible: they produce effects by *disabling* other strategies rather than directly modulating features
+- Baseline strategies at 0.5: entropy_modulation + coherence_modulation (because current features diverge from targets)
+
+**Tests updated (5):** All in TestMotorHelpers — expectations changed from 1.0 to 0.5 for weight helpers and coherence target. No tests removed, no tests weakened.
+
+---
+
 ## What's Next
 
-Candidates for Directive 008+:
+Candidates for Directive 009+:
 
-- **Conscious layer** — first LLM-backed system, semantic domain. Now has clear requirements: 8-9 limbs need semantic processing, 5-limb convergent cluster needs differentiation
+- **Conscious layer** — first LLM-backed system. Clean calibration data at correct midpoint, 8-9 limbs confirmed as needing semantic processing, convergent cluster (8 limbs) needs differentiation
 - **Sleep layer** — transfer function optimization, cache pruning, orientational field weight adjustment
-- **Tarka investigation** — entropy modulation fires but doesn't produce distinct calibration signal; may need fundamentally different measurement approach
+- **Tarka investigation** — three approaches failed (token-level D004, sentence-level D007, midpoint rebalance D008). Accept as semantic-domain or fundamentally rethink

@@ -289,24 +289,25 @@ class TestMotorHelpers:
 
     def test_get_limb_weight_found(self):
         field = OrientationalField()
-        assert _get_limb_weight(field.read(), PRAKASA_ID) == 1.0
+        assert _get_limb_weight(field.read(), PRAKASA_ID) == 0.5
 
     def test_get_limb_weight_not_found(self):
-        assert _get_limb_weight({"limbs": []}, 999) == 1.0
+        assert _get_limb_weight({"limbs": []}, 999) == 0.5
 
     def test_mean_weight_default(self):
         field = OrientationalField()
-        assert _mean_weight(field.read()) == 1.0
+        assert _mean_weight(field.read()) == 0.5
 
     def test_mean_weight_empty(self):
-        assert _mean_weight({"limbs": []}) == 1.0
+        assert _mean_weight({"limbs": []}) == 0.5
 
     def test_target_profile_default_weights(self):
+        """At midpoint (0.5), targets should be neutral — close to typical text."""
         field = OrientationalField()
         target = _compute_target_profile(field.read())
         assert target["density"] == pytest.approx(0.8)
         assert target["entropy"] == pytest.approx(3.5)
-        assert target["coherence"] == pytest.approx(0.7)
+        assert target["coherence"] == pytest.approx(0.35)
         assert target["periodicity"] == pytest.approx(0.0)
         assert target["noise_floor"] == pytest.approx(0.0)
         assert target["impedance"] == pytest.approx(0.0)

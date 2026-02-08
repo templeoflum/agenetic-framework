@@ -45,7 +45,7 @@ ALL_LIMB_IDS = list(range(1, 19))
 FEATURE_KEYS = ["density", "entropy", "coherence", "periodicity", "noise_floor", "impedance"]
 
 
-def vary_single_limb(limb_id: int, weight: float, baseline: float = 1.0) -> OrientationalField:
+def vary_single_limb(limb_id: int, weight: float, baseline: float = 0.5) -> OrientationalField:
     """Create an OrientationalField with one limb varied, others at baseline.
 
     This is the weight variation utility for isolated limb testing.
@@ -53,7 +53,7 @@ def vary_single_limb(limb_id: int, weight: float, baseline: float = 1.0) -> Orie
     Args:
         limb_id: The limb to vary (1-18).
         weight: The weight value to assign to the varied limb.
-        baseline: The weight value for all other limbs (default 1.0).
+        baseline: The weight value for all other limbs (default 0.5).
 
     Returns:
         An OrientationalField with the specified configuration.
@@ -204,7 +204,7 @@ _LIMB_NAMES = {
 
 @pytest.fixture(scope="module")
 def baseline_result():
-    """Run round-trip with all weights at default (1.0)."""
+    """Run round-trip with all weights at default (0.5)."""
     field = OrientationalField()
     return round_trip(CALIBRATION_INPUT, field)
 
@@ -218,7 +218,7 @@ class TestCalibrationSweep:
     """
 
     def test_limb_weight_zero(self, limb_id, baseline_result):
-        """Set one limb to 0.0, hold others at 1.0. Record feature deltas vs baseline."""
+        """Set one limb to 0.0, hold others at 0.5. Record feature deltas vs baseline."""
         field = vary_single_limb(limb_id, 0.0)
         result = round_trip(CALIBRATION_INPUT, field)
 
@@ -245,15 +245,15 @@ class TestCalibrationSweep:
 
 
 @pytest.mark.parametrize("limb_id", ALL_LIMB_IDS)
-class TestCalibrationSweepHalf:
-    """Parameterized calibration: vary each limb to 0.5 and record feature deltas.
+class TestCalibrationSweepFull:
+    """Parameterized calibration: vary each limb to 1.0 (full amplification).
 
-    Second sweep point for graded vs binary response analysis.
+    Third sweep point for symmetric response analysis around 0.5 midpoint.
     """
 
-    def test_limb_weight_half(self, limb_id, baseline_result):
-        """Set one limb to 0.5, hold others at 1.0. Record feature deltas vs baseline."""
-        field = vary_single_limb(limb_id, 0.5)
+    def test_limb_weight_full(self, limb_id, baseline_result):
+        """Set one limb to 1.0, hold others at 0.5. Record feature deltas vs baseline."""
+        field = vary_single_limb(limb_id, 1.0)
         result = round_trip(CALIBRATION_INPUT, field)
 
         baseline_features = baseline_result["output_report"]["features"]
@@ -264,7 +264,7 @@ class TestCalibrationSweepHalf:
 
         record = {
             "limb_name": _LIMB_NAMES[limb_id],
-            "weight_value": 0.5,
+            "weight_value": 1.0,
             "feature_deltas": relative_deltas,
         }
 
@@ -319,26 +319,41 @@ def _run_sweep_at_weight(weight: float, baseline_features: dict) -> list[dict]:
 
 
 def test_calibration_summary():
-    """Run full calibration sweep and print summary table.
+    """Run full three-point calibration sweep and print summary table.
 
-    This is the experimental output for the planning instance to analyze.
-    Varies each of the 18 limbs to weight=0.0 and weight=0.5 while holding
-    all others at baseline=1.0, then measures feature deltas in motor
-    output relative to the all-1.0 baseline. Two data points per limb.
+    Varies each of the 18 limbs to weight=0.0 (suppression) and weight=1.0
+    (amplification) while holding all others at baseline=0.5. Also verifies
+    that 0.5 (baseline) produces near-zero deltas. Three data points per limb.
     """
-    # Baseline: all weights at 1.0.
+    # Baseline: all weights at 0.5 (midpoint).
     field_baseline = OrientationalField()
     baseline = round_trip(CALIBRATION_INPUT, field_baseline)
     baseline_features = baseline["output_report"]["features"]
 
     all_results = []
 
-    for sweep_weight in [0.0, 0.5]:
-        # Header.
+    # Verify 0.5 baseline produces near-zero deltas.
+    baseline_check = _run_sweep_at_weight(0.5, baseline_features)
+    non_zero_baseline = []
+    for r in baseline_check:
+        max_delta = max(abs(d) for d in r["feature_deltas"].values())
+        if max_delta > 0.001:
+            non_zero_baseline.append((r["limb_name"], max_delta))
+
+    if non_zero_baseline:
+        print("\nBASELINE CHECK: Non-zero deltas at 0.5 (should be ~0):")
+        for name, delta in non_zero_baseline:
+            print(f"  {name}: max_delta = {delta:.4f}")
+    else:
+        print("\nBASELINE CHECK: All limbs at 0.5 produce zero delta (correct)")
+
+    # Run sweep at 0.0 (suppression) and 1.0 (amplification).
+    for sweep_weight in [0.0, 1.0]:
         header = f"{'Limb varied':<20}" + " | ".join(f"{k:>12}" for k in FEATURE_KEYS) + " | strategies"
         sep = "-" * len(header)
         print(f"\n{'=' * len(header)}")
-        print(f"CALIBRATION SWEEP: Limb weight 1.0 -> {sweep_weight} (baseline -> varied)")
+        label = "suppression" if sweep_weight == 0.0 else "amplification"
+        print(f"CALIBRATION SWEEP: Limb weight 0.5 -> {sweep_weight} ({label})")
         print(f"{'=' * len(header)}")
         print(header)
         print(sep)
@@ -349,10 +364,10 @@ def test_calibration_summary():
             deltas = r["feature_deltas"]
             strategies = r["strategies_applied"]
             suppressed = r["suppressed"]
-            label = f"{name} ({sweep_weight})"
+            row_label = f"{name} ({sweep_weight})"
             if suppressed:
-                label += " [SUP]"
-            row = f"{label:<20}" + " | ".join(
+                row_label += " [SUP]"
+            row = f"{row_label:<20}" + " | ".join(
                 f"{deltas[k]:>+12.4f}" for k in FEATURE_KEYS
             ) + f" | {', '.join(strategies)}"
             print(row)
@@ -360,11 +375,11 @@ def test_calibration_summary():
         print(sep)
         all_results.extend(results)
 
-    print(f"\nTotal sweep points: {len(all_results)} ({len(all_results)//18} per limb × 18 limbs)")
-    print(f"Baseline features: " + " | ".join(
+    print(f"\nTotal sweep points: {len(all_results)} ({len(all_results)//18} per limb x 18 limbs)")
+    print(f"Baseline (0.5) features: " + " | ".join(
         f"{k}: {baseline_features[k]:.4f}" for k in FEATURE_KEYS
     ))
     print(f"Baseline strategies: {baseline['motor_output']['strategies_applied']}")
 
-    # Assert we tested all 18 limbs at both weight points.
+    # Assert we tested all 18 limbs at 2 non-baseline weight points.
     assert len(all_results) == 36

@@ -37,7 +37,7 @@ The binary-vs-graded finding from Directive 007 (only Samatvam showed proportion
 
 ## Sequencing Notes
 
-After 008, all signal-domain and motor calibration is against the intended operating point. The data should be stable enough to inform conscious layer design. 
+After 008, all signal-domain and motor calibration is against the intended operating point. The data should be stable enough to inform conscious layer design.
 
 Directive 009 candidates:
 1. **Conscious layer** — we now have clean calibration data against the correct baseline, convergent cluster analysis showing what conscious needs to differentiate, and 9 motor strategies providing the output mechanism. The architectural frontier.

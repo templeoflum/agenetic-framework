@@ -32,7 +32,7 @@ The **conscious** layer is the first and only system that interprets. It fires o
 
 The orientational field is not a system. It is the medium in which all seven systems operate — a self-model derived from the eighteen limbs of Asparśa Yoga. It provides the reference signal against which sensory measures deviation, the identity against which immune discriminates self from not-self, and the orientation that shapes which associations surface.
 
-The field's limb weights are transfer function coefficients. Sleep modifies them. Genetic provides the factory calibration.
+The field's limb weights are transfer function coefficients that default to 0.5 (midpoint) — the point of maximum information entropy, equally capable of amplification or suppression. Sleep modifies them at runtime. Genetic provides the factory calibration.
 
 ## Current Status
 

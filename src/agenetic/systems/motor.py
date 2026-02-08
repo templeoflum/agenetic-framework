@@ -45,14 +45,14 @@ def _get_limb_weight(field_state, limb_id: int) -> float:
     for limb in limbs:
         if limb["id"] == limb_id:
             return limb["weight"]
-    return 1.0
+    return 0.5
 
 
 def _mean_weight(field_state) -> float:
     """Compute mean of all limb weights."""
     limbs = field_state.get("limbs", [])
     if not limbs:
-        return 1.0
+        return 0.5
     return sum(limb["weight"] for limb in limbs) / len(limbs)
 
 
@@ -68,9 +68,12 @@ def _to_str(input_data) -> str:
 def _compute_target_profile(field_state) -> SignalFeatures:
     """Compute target signal features from orientational field weights.
 
-    Each target is derived from the governing limb weight(s).
-    With default weights (all 1.0), produces moderate targets:
-    density=0.8, entropy=3.5, coherence=0.7, impedance=0.0,
+    Symmetric around 0.5 midpoint: target = base + (weight - 0.5) * scale.
+    At 0.5 (default), targets match typical text features — minimal
+    transformation. Above 0.5 amplifies; below 0.5 suppresses.
+
+    With default weights (all 0.5), produces neutral targets:
+    density=0.8, entropy=3.5, coherence=0.35, impedance=0.0,
     periodicity=0.0, noise_floor=0.0.
     """
     mean_w = _mean_weight(field_state)
@@ -81,12 +84,14 @@ def _compute_target_profile(field_state) -> SignalFeatures:
     sraddha_w = _get_limb_weight(field_state, SRADDHA_ID)
 
     return {
-        "density": min(max(mean_w * 0.8, 0.0), 1.0),
-        "entropy": max(tarka_w * 3.5, 0.0),
-        "coherence": min(max(samatvam_w * 0.7, 0.0), 1.0),
-        "periodicity": min(max((1.0 - prakasa_w) * 0.3, 0.0), 1.0),
-        "noise_floor": min(max((1.0 - sraddha_w) * 0.3, 0.0), 1.0),
-        "impedance": min(max((1.0 - nivrtti_w) * 0.3, 0.0), 1.0),
+        # Direct: more weight = higher target.
+        "density": min(max(0.8 + (mean_w - 0.5) * 0.4, 0.0), 1.0),
+        "entropy": max(3.5 + (tarka_w - 0.5) * 3.0, 0.0),
+        "coherence": min(max(0.35 + (samatvam_w - 0.5) * 0.7, 0.0), 1.0),
+        # Inverse: more weight = lower target (less forced pattern/noise/impedance).
+        "periodicity": min(max((0.5 - prakasa_w) * 0.6, 0.0), 1.0),
+        "noise_floor": min(max((0.5 - sraddha_w) * 0.6, 0.0), 1.0),
+        "impedance": min(max((0.5 - nivrtti_w) * 0.6, 0.0), 1.0),
         "token_count": 0,            # not directly targeted
         "vocabulary_richness": 0.0,   # derived from entropy strategy
     }
@@ -494,8 +499,9 @@ class MotorSystem(BaseSystem):
 
         # --- Ārēka suppression gate (B3) ---
         # Applied BEFORE other strategies. If active, suppress entirely.
+        # At 0.5 default, gate is active. Threshold relative to midpoint.
         areka_w = _get_limb_weight(field_state, AREKA_ID)
-        if areka_w > 0.8:
+        if areka_w > 0.3:
             input_noise = current["noise_floor"]
             input_entropy = current["entropy"]
             if input_noise > 0.3 and input_entropy > 5.0:
@@ -586,10 +592,11 @@ class MotorSystem(BaseSystem):
 
         # --- Māyāvāda transformation cap (B2) ---
         # Applied AFTER all 6 feature strategies, BEFORE repair check.
+        # At 0.5 default, cap is inactive. Active below 0.45.
         mayavada_w = _get_limb_weight(field_state, MAYAVADA_ID)
         transform_magnitude = _compute_transform_magnitude(text, output)
 
-        if mayavada_w < 0.95:
+        if mayavada_w < 0.45:
             max_allowed = 1.0 - mayavada_w
             if transform_magnitude > max_allowed and max_allowed > 0.0:
                 output = _blend_toward_original(text, output, max_allowed, transform_magnitude)
