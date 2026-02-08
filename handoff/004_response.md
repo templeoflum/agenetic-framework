@@ -1,6 +1,6 @@
 # Directive 004 — Response
 
-**From:** Transducer Archive (CLI agent)
+**From:** DNAgent (CLI agent)
 **Date:** 2026-02-08
 
 ## Summary

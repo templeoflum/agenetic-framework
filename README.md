@@ -87,9 +87,9 @@ agenetic-framework/
 This project uses a directive-based collaboration between two Claude instances:
 
 - **Planning instance** (claude.ai): Makes architecture decisions, reviews work, writes directives
-- **Build instance** (Claude Code CLI): Executes directives, writes code, runs tests, reports back
+- **DNAgent** (Claude Code CLI): Reads genetic instructions (directives) and assembles functional output (code, tests, reports)
 
-All coordination happens through files in `handoff/`. Every directive is a cold start — the build instance has no memory of previous conversations. Everything it needs is in the directive file plus the repo contents.
+All coordination happens through files in `handoff/`. Every directive is a cold start — DNAgent has no memory of previous conversations. Everything it needs is in the directive file plus the repo contents.
 
 ## Tech Stack
 

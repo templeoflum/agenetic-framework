@@ -125,11 +125,30 @@ Replaced motor stub with full signal-level text restructuring engine. Motor is t
 
 ---
 
+## 2026-02-08 — Directive 005: Housekeeping — Agent Identity and Documentation Sync
+
+Tests: No change (195 passing)
+
+Cleanup pass. No code changes.
+
+**Agent identity formalized:** The CLI build agent is now **DNAgent** (DNA + Agent). Updated CLAUDE.md and all handoff response headers. The name captures the framework relationship — agenetic (without origin) is the architecture, DNAgent reads genetic instructions (directives) and assembles functional output.
+
+**Planning log replaced:** Full replacement with post-Directive 004 analysis including:
+- Calibration results table from round-trip sweep
+- Apparatus-vs-hypothesis interpretation caveat (confirmed plumbing works, semantic validation requires conscious layer)
+- Updated limb-to-feature mapping status (3 apparatus-confirmed, 1 below threshold, rest pending)
+- DNAgent identity decision
+- Updated sequencing (Directive 006+ candidates: conscious layer, Tarka tuning, or sleep)
+
+**What changed:** CLAUDE.md (agent name), handoff/*_response.md headers (Transducer Archive → DNAgent), PLANNING_LOG.md (full replacement), DEVLOG.md (this entry).
+
+---
+
 ## What's Next
 
-Candidates for Directive 005+:
+Candidates for Directive 006+:
 
 - **Conscious layer** — first LLM-backed system, semantic domain, meaning construction from signal-domain inputs
 - **Sleep layer** — transfer function optimization, cache pruning, orientational field weight adjustment
+- **Tarka entropy tuning** — refine entropy modulation strategy to register in calibration
 - **Reference signal calibration** — refine limb-to-feature mappings based on round-trip calibration data
-- **Full orientational field implementation** — expand limb definitions beyond one-line principles to operational behavioral profiles with contextual activation patterns and inter-limb relationships

@@ -11,27 +11,27 @@ A biologically-inspired agent architecture where seven distinct information-proc
 This project uses a **directive-based collaboration** between two Claude instances:
 
 - **Planning instance** (claude.ai chat): Makes architecture decisions, reviews work, writes directives
-- **Build instance** (Claude Code CLI): Executes directives, writes code, runs tests, reports back
+- **DNAgent** (Claude Code CLI): Reads genetic instructions (directives) and assembles functional output (code) — like a ribosome reading mRNA and building proteins. The name captures the relationship: agenetic (without origin) is the framework, DNAgent (DNA + Agent) is the builder.
 
 ### The Handoff Protocol
 
 All coordination happens through files in `handoff/`:
 
-- `NNN_directive.md` — Instructions from planning instance to build instance
-- `NNN_response.md` — Build instance's completion report
+- `NNN_directive.md` — Instructions from planning instance to DNAgent
+- `NNN_response.md` — DNAgent's completion report
 
-**Every directive is a cold start.** The build instance has no memory of previous conversations. Everything it needs to execute is in the directive file itself plus the repo contents.
+**Every directive is a cold start.** DNAgent has no memory of previous conversations. Everything it needs to execute is in the directive file itself plus the repo contents.
 
 ### Workflow
 
 1. Planning instance writes the next directive (packaged with repo or provided by human)
-2. Human tells build instance to read and execute the directive
-3. Build instance executes, writes `handoff/NNN_response.md`, commits, and pushes to GitHub
+2. Human tells DNAgent to read and execute the directive
+3. DNAgent executes, writes `handoff/NNN_response.md`, commits, and pushes to GitHub
 4. Human tells planning instance the directive is complete
 5. Planning instance reads the response and changed files directly from GitHub
 6. Planning instance writes next directive based on results
 
-### Key Rules for the Build Instance
+### Key Rules for DNAgent
 
 - **Read the directive fully before acting.** Don't start executing partway through.
 - **Stay within scope boundaries.** Every directive has DO and DO NOT lists. Respect them.

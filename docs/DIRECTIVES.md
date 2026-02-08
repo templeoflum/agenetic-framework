@@ -2,13 +2,13 @@
 
 ## Overview
 
-This project uses directive-based collaboration between two Claude instances. The **planning instance** (claude.ai chat) handles architecture decisions, design thinking, and review. The **build instance** (Claude Code CLI) handles implementation, testing, and reporting.
+This project uses directive-based collaboration between two Claude instances. The **planning instance** (claude.ai chat) handles architecture decisions, design thinking, and review. **DNAgent** (Claude Code CLI) handles implementation, testing, and reporting.
 
 The `handoff/` directory is the interface between them. All coordination passes through numbered directive and response files.
 
 ## Why Directives
 
-Every CLI session is a cold start. The build instance has no memory of previous conversations, planning discussions, or design rationale beyond what exists in the repo itself. Directives solve this by packaging everything the agent needs into a single self-contained document.
+Every CLI session is a cold start. DNAgent has no memory of previous conversations, planning discussions, or design rationale beyond what exists in the repo itself. Directives solve this by packaging everything the agent needs into a single self-contained document.
 
 This also creates an automatic project history. The sequence of directives and responses is the narrative of how the system was built.
 
@@ -23,7 +23,7 @@ This also creates an automatic project history. The sequence of directives and r
 
 Why this directive exists. What was decided, what changed, what the
 build instance needs to understand to execute correctly. Include enough
-background that a fresh agent with zero conversation history can act
+background that DNAgent with zero conversation history can act
 on this alone.
 
 Reference specific files in the repo when relevant:
@@ -79,9 +79,9 @@ the build instance to re-decide.
 
 **Self-containment.** No "as we discussed" or "per the previous directive." If context matters, include it inline. The build instance shouldn't need to read previous directives to execute the current one (though it can reference them for historical context).
 
-**Explicit design decisions.** If the planning instance has already decided something — an interface, a data structure, a naming convention — state it in the directive. Don't leave settled questions open for the build instance to re-decide.
+**Explicit design decisions.** If the planning instance has already decided something — an interface, a data structure, a naming convention — state it in the directive. Don't leave settled questions open for DNAgent to re-decide.
 
-**Scope boundaries are mandatory.** The DO NOT list prevents scope creep. The build instance should treat anything not explicitly in scope as out of scope.
+**Scope boundaries are mandatory.** The DO NOT list prevents scope creep. DNAgent should treat anything not explicitly in scope as out of scope.
 
 **Honest reporting.** The response file should document what actually happened, including failures, surprises, and open questions. The planning instance needs ground truth, not a success narrative.
 

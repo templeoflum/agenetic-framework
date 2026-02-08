@@ -1,3 +1,45 @@
+# Directive 005 — Housekeeping: Agent Identity, Documentation Accuracy, Planning Log Sync
+
+**Type:** Documentation / Housekeeping
+**From:** Planning instance (claude.ai)
+**Date:** 2026-02-08
+
+## Context
+
+Directive 004 (motor layer + round-trip calibration) is complete and merged. 195 tests passing. Before moving to the next implementation directive, we need a cleanup pass to:
+
+1. Formalize the build agent's identity as **DNAgent**
+2. Sync the planning log with post-Directive 004 analysis
+3. Ensure all documentation accurately reflects the current state
+
+This is a zero-code-change directive. No new features, no test changes, no source modifications. Documentation only.
+
+## Read Before Starting
+
+- `CLAUDE.md` — current agent orientation (contains unnamed "Build instance" references)
+- `PLANNING_LOG.md` — will be replaced entirely
+- `DEVLOG.md` — append new entry
+- `handoff/001_response.md` through `handoff/004_response.md` — check for "Transducer Archive" headers
+
+## Part A: Agent Identity — DNAgent
+
+The CLI build agent is now named **DNAgent** (DNA + Agent). The name captures the relationship: agenetic (without origin) is the framework, DNAgent reads genetic instructions (directives) and assembles functional output (code) — like a ribosome reading mRNA and building proteins.
+
+### Changes required:
+
+1. **`CLAUDE.md`** — In the section describing the two-instance collaboration model, replace generic references to "Build instance (Claude Code CLI)" with **DNAgent (Claude Code CLI)**. Add a brief note explaining the name. Do not change the planning instance description (that stays as "Planning instance (claude.ai)").
+
+2. **All `handoff/*_response.md` files** — Replace "Transducer Archive" in the `From:` header line with **DNAgent**. This is a find-and-replace on the header only. Do not modify any other content in these files.
+
+3. **`docs/DIRECTIVES.md`** (if it exists) — Update any references to the build agent to use DNAgent.
+
+## Part B: Replace PLANNING_LOG.md
+
+Replace the entire contents of `PLANNING_LOG.md` with the version provided below. This is the planning instance's authoritative record — it includes post-Directive 004 calibration analysis, the apparatus-vs-hypothesis interpretation caveat, updated limb-to-feature mapping status, and the DNAgent identity decision.
+
+**Do not edit or summarize the replacement content.** Copy it exactly as provided.
+
+<planning_log_replacement>
 # Planning Log
 
 Chat-side record of decisions, rationale, and open threads. Updated between directives. Travels with the next directive when the agent needs planning context.
@@ -181,3 +223,47 @@ The calibration confirms plumbing works but not that yoga semantics map correctl
 - **Sleep layer** — transfer function optimization. Blocked on understanding what the orientational field should look like post-calibration
 - **Weight system redesign** — move from uniform 1.0 to 0.5 midpoint model. Blocked on sleep + calibration data
 - **Semantic validation** — use conscious layer to evaluate whether signal-level restructuring produces output that actually embodies yoga limb semantics
+</planning_log_replacement>
+
+## Part C: DEVLOG.md Entry
+
+Append the following entry to the end of `DEVLOG.md`:
+
+```
+## 2026-02-08 — Directive 005: Housekeeping — Agent Identity and Documentation Sync
+
+Tests: No change (195 passing)
+
+Cleanup pass. No code changes.
+
+**Agent identity formalized:** The CLI build agent is now **DNAgent** (DNA + Agent). Updated CLAUDE.md and all handoff response headers. The name captures the framework relationship — agenetic (without origin) is the architecture, DNAgent reads genetic instructions (directives) and assembles functional output.
+
+**Planning log replaced:** Full replacement with post-Directive 004 analysis including:
+- Calibration results table from round-trip sweep
+- Apparatus-vs-hypothesis interpretation caveat (confirmed plumbing works, semantic validation requires conscious layer)
+- Updated limb-to-feature mapping status (3 apparatus-confirmed, 1 below threshold, rest pending)
+- DNAgent identity decision
+- Updated sequencing (Directive 006+ candidates: conscious layer, Tarka tuning, or sleep)
+
+**What changed:** CLAUDE.md (agent name), handoff/*_response.md headers (Transducer Archive → DNAgent), PLANNING_LOG.md (full replacement), DEVLOG.md (this entry).
+```
+
+## Part D: Verify No Stale References
+
+After making all changes, search the repo for any remaining instances of:
+- "Transducer Archive" — should be zero
+- "Build instance" without "DNAgent" context in CLAUDE.md — should be updated
+- "pre-Directive 004" — should be zero (old planning log timestamp)
+
+Report any stale references found in the response.
+
+## Verification Checklist
+
+- [ ] All `handoff/*_response.md` files have `From: DNAgent` (not "Transducer Archive")
+- [ ] `CLAUDE.md` names the build agent as DNAgent
+- [ ] `PLANNING_LOG.md` replaced with provided version (post-Directive 004, includes calibration table)
+- [ ] `DEVLOG.md` has Directive 005 entry appended
+- [ ] No remaining "Transducer Archive" references anywhere in the repo
+- [ ] No code files modified (src/, tests/)
+- [ ] All 195 existing tests still pass (run `pytest` to confirm even though no code changed)
+- [ ] Git commit and push completed
