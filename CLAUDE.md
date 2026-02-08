@@ -70,11 +70,15 @@ agenetic-framework/
 ├── CLAUDE.md              ← You are here
 ├── README.md              ← Public-facing project description
 ├── docs/
-│   ├── ARCHITECTURE.md    ← Full v2 framework specification
-│   └── DIRECTIVES.md      ← How the directive system works
+│   ├── ARCHITECTURE.md            ← Full v2 framework specification
+│   ├── DIRECTIVES.md              ← How the directive system works
+│   ├── architecture_amendment.md  ← Signal-semantics boundary
+│   └── signal_report_structure.md ← Signal report TypedDict spec
 ├── handoff/               ← Directive/response exchange files
 │   ├── 001_directive.md
-│   └── 001_response.md
+│   ├── 001_response.md
+│   ├── 002_directive.md
+│   └── 002_response.md
 ├── references/            ← Background material, Asparśa spec, etc.
 ├── src/                   ← Source code
 │   └── agenetic/

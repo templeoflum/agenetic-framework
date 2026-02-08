@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, TypedDict
+from typing import Any, Literal, TypedDict
 
 
 class ThreatEntry(TypedDict):
@@ -52,6 +52,87 @@ class FieldState(TypedDict):
     limbs: list[FieldLimb]
 
 
+# --- Signal-domain types (added in Directive 002) ---
+
+
+class SignalFeatures(TypedDict):
+    """Raw signal measurements extracted from input.
+
+    Describes the structural properties of the input as signal.
+    """
+
+    density: float
+    entropy: float
+    coherence: float
+    periodicity: float
+    noise_floor: float
+    impedance: float
+    token_count: int
+    vocabulary_richness: float
+
+
+class SignalClassification(TypedDict):
+    """Signal type classification based on features."""
+
+    signal_type: Literal["steady_state", "transient", "periodic", "noise", "complex"]
+    confidence: float
+    components: list[str]
+
+
+class SignalDelta(TypedDict):
+    """Delta between measured signal and orientational field reference."""
+
+    density_delta: float
+    entropy_delta: float
+    coherence_delta: float
+    periodicity_delta: float
+    noise_delta: float
+    impedance_delta: float
+    aggregate_deviation: float
+    activated_limbs: list[int]
+
+
+class SignalReport(TypedDict):
+    """The output of the sensory layer — consumed by immune, subconscious, conscious."""
+
+    features: SignalFeatures
+    classification: SignalClassification
+    delta: SignalDelta
+    tick: int
+    input_hash: str
+
+
+class CachedSignalPattern(TypedDict):
+    """A stored signal pattern from prior processing (subconscious cache)."""
+
+    input_hash: str
+    feature_vector: list[float]  # [density, entropy, coherence, periodicity, noise_floor, impedance]
+    signal_type: str
+    outcome: str  # "escalated", "reflex_response", "rejected"
+    response_pattern_id: str | None
+    encounter_count: int
+    last_seen_tick: int
+
+
+class ThreatAssessment(TypedDict):
+    """Structured output of the immune system."""
+
+    is_anomalous: bool
+    anomaly_scores: dict[str, float]
+    matched_patterns: list[str]
+    threat_level: Literal["none", "low", "medium", "high", "critical"]
+    recommended_action: Literal["proceed", "flag", "quarantine", "reject"]
+
+
+class SubconsciousOutput(TypedDict):
+    """Structured output of the subconscious system."""
+
+    escalation_recommended: bool
+    escalation_confidence: float
+    matched_pattern_ids: list[str]
+    primed_associations: list[str]
+
+
 class SystemState(TypedDict):
     """The shared state object passed between all systems in the network.
 
@@ -64,6 +145,10 @@ class SystemState(TypedDict):
     immune_log: list[ThreatEntry]
     metadata: Metadata
     flags: Flags
+    signal_report: SignalReport | None
+    threat_assessment: ThreatAssessment | None
+    subconscious_output: SubconsciousOutput | None
+    signal_pattern_cache: list[CachedSignalPattern]
 
 
 class BaseSystem(ABC):

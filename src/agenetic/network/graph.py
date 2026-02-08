@@ -1,7 +1,7 @@
 """LangGraph wiring — builds a runnable graph from the seven systems.
 
 Phase 1 uses a simplified routing strategy:
-1. Process every-cycle systems (sensory, immune, subconscious) in parallel
+1. Process every-cycle systems (sensory, immune, subconscious) in order
 2. Conditionally route to conscious (if escalation flag is set)
 3. Route to motor for output expression
 4. Sleep and genetic are not actively routed in Phase 1 (they will be
@@ -32,6 +32,10 @@ class GraphState(TypedDict):
     immune_log: list
     metadata: dict
     flags: dict
+    signal_report: Any  # SignalReport | None
+    threat_assessment: Any  # ThreatAssessment | None
+    subconscious_output: Any  # SubconsciousOutput | None
+    signal_pattern_cache: list
 
 
 def create_default_state(
@@ -58,9 +62,13 @@ def create_default_state(
         },
         "flags": {
             "degraded": [],
-            "escalate_to_conscious": True,  # Phase 1: always escalate
+            "escalate_to_conscious": True,  # Phase 1 default: always escalate
             "apoptotic": False,
         },
+        "signal_report": None,
+        "threat_assessment": None,
+        "subconscious_output": None,
+        "signal_pattern_cache": [],
     }
 
 
@@ -85,6 +93,10 @@ def _make_node(system: BaseSystem):
             "immune_log": state["immune_log"],
             "metadata": updated_metadata,
             "flags": state["flags"],
+            "signal_report": state.get("signal_report"),
+            "threat_assessment": state.get("threat_assessment"),
+            "subconscious_output": state.get("subconscious_output"),
+            "signal_pattern_cache": state.get("signal_pattern_cache", []),
         }
 
         # Process.
@@ -123,14 +135,13 @@ def build_graph(
     """Build a LangGraph StateGraph wiring the seven systems together.
 
     Phase 1 simplified routing:
-    - sensory runs first (transduction must happen before anything else)
-    - immune and subconscious run after sensory (parallel in biology,
-      sequential here for simplicity)
+    - sensory runs first (signal characterization)
+    - immune runs second (signal anomaly detection)
+    - subconscious runs third (signal pattern priming + escalation decision)
     - conditional routing to conscious (on escalation) or straight to motor
     - motor produces final output
 
-    Sleep and genetic are included as nodes but not actively routed
-    in Phase 1. They will be triggered by tick scheduling in Phase 2.
+    Sleep and genetic are not actively routed in Phase 1.
 
     Returns:
         A compiled LangGraph that can be invoked with a GraphState.
@@ -144,7 +155,7 @@ def build_graph(
     graph.add_node("conscious", _make_node(conscious))
     graph.add_node("motor", _make_node(motor))
 
-    # Phase 1 routing: linear flow with conditional conscious bypass.
+    # Phase 1 routing: signal domain → conditional → output.
     graph.set_entry_point("sensory")
     graph.add_edge("sensory", "immune")
     graph.add_edge("immune", "subconscious")
