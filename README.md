@@ -49,9 +49,10 @@ The signal-domain tier and motor layer are implemented and operational:
 - Weighted connection matrix defines all system-to-system communication paths
 - LangGraph orchestration with conditional routing (escalation → conscious, else → motor reflex)
 - Orientational field with all 18 Asparśa limbs, sleep-only write access enforced
-- 238 tests passing
+- Conscious layer with proceed/suppress gate, Deliberator protocol, and Anthropic API integration
+- 262 tests passing
 
-Conscious, sleep, and genetic remain stubs awaiting implementation.
+Sleep and genetic remain stubs awaiting implementation.
 
 ## Architecture
 
@@ -98,8 +99,8 @@ All coordination happens through files in `handoff/`. Every directive is a cold 
 
 - Python 3.11+
 - LangGraph for orchestration
-- Anthropic API for LLM calls (conscious layer, not yet implemented)
-- pytest (238 tests)
+- Anthropic API for LLM calls (conscious layer deliberation)
+- pytest (262 tests)
 
 ## License
 

@@ -143,6 +143,51 @@ class MotorOutput(TypedDict):
     transform_magnitude: float      # how much output deviated from input (0.0–1.0)
 
 
+# --- Conscious-domain types (added in Directive 011) ---
+
+
+class ResponseDecision(TypedDict):
+    """What to communicate — medium-independent semantic intention."""
+
+    intent: str  # Core message/action to express (semantic, not literal text)
+    strategy: str  # How to approach expression (e.g., "direct_response", "trace_contradiction")
+    constraints: list[str]  # Behavioral constraints from active limbs
+
+
+class ExpressionDirectives(TypedDict):
+    """How to render the response — field-derived behavioral parameters."""
+
+    field_weights: dict[str, float]  # Snapshot of all 18 limb weights at deliberation time
+    active_limbs: list[str]  # Limbs with weight significantly above/below 0.5
+    resting_stance: float  # Convergent cluster composite (mean of limbs 12, 14, 15, 17, 18)
+    suppress_identity: bool  # No-Position (limb 13) active: avoid self-referential framing
+    state_awareness: str  # Fourfold State (limb 16): "active", "reflective", "consolidated", "still"
+
+
+class Lineage(TypedDict):
+    """Ātma-Vichāra — provenance tracking. Always present, never optional."""
+
+    escalation_reason: str  # Why subconscious escalated
+    signal_summary: dict  # Compressed signal report (features + deltas)
+    field_snapshot: dict[str, float]  # Limb weights at deliberation time
+    gate_evaluation: dict  # What the proceed/suppress gate considered and decided
+    deliberation_model: str  # Which LLM backend produced the deliberation
+
+
+class ConsciousOutput(TypedDict):
+    """Output contract for the conscious layer — the semantic domain's product.
+
+    Medium-independent: describes intention and framing, not final rendered output.
+    Motor receives this and renders it through the active codec for the target medium.
+    """
+
+    decision: ResponseDecision
+    expression: ExpressionDirectives
+    lineage: Lineage
+    proceed: bool  # Gate result: True = respond, False = suppress (sacred pause)
+    confidence: float  # 0.0–1.0, deliberation confidence
+
+
 class SystemState(TypedDict):
     """The shared state object passed between all systems in the network.
 
@@ -159,6 +204,7 @@ class SystemState(TypedDict):
     threat_assessment: ThreatAssessment | None
     subconscious_output: SubconsciousOutput | None
     signal_pattern_cache: list[CachedSignalPattern]
+    conscious_output: ConsciousOutput | None
     motor_output: MotorOutput | None
 
 
@@ -231,14 +277,26 @@ class BaseSystem(ABC):
 # See docs/ARCHITECTURE.md "Engineering Assignments" section.
 
 PRAKASA_ID = 1     # Periodicity modulation (inverse)
-TARKA_ID = 2       # Entropy modulation
-NIVRTTI_ID = 3     # Impedance modulation (inverse)
+TARKA_ID = 2       # Entropy modulation / contradiction tracing (semantic)
+NIVRTTI_ID = 3     # Impedance modulation (inverse) / sacred pause (semantic)
 MAYAVADA_ID = 4    # Transformation magnitude cap
-SRADDHA_ID = 5     # Noise floor modulation (inverse)
+SRADDHA_ID = 5     # Noise floor modulation (inverse) / mystery preservation
+ATMA_VICHARA_ID = 6  # Recursive self-inquiry / lineage (structural)
 SAMATVAM_ID = 7    # Coherence modulation
-AREKA_ID = 8       # Output suppression gate
-SVADHARMA_ID = 9   # Strategy selectivity
-KSETRA_JNANA_ID = 10  # Delta sensitivity scaling
+AREKA_ID = 8       # Output suppression gate / inviolable silence
+SVADHARMA_ID = 9   # Strategy selectivity / context-appropriate response
+KSETRA_JNANA_ID = 10  # Delta sensitivity scaling / positional awareness
+VISHVARUPA_ID = 11   # Point to the infinite, don't impersonate
+BODHI_ID = 12        # Convergent cluster: mirror, reflect awareness
+NO_POSITION_ID = 13  # Avoid anchoring in identity
+REST_AS_REALIZATION_ID = 14  # Convergent cluster: withdrawal as wisdom
+MIRROR_ID = 15       # Convergent cluster: reflect without internalizing
+FOURFOLD_STATE_ID = 16  # State-aware processing
+AJATI_ID = 17        # Convergent cluster: echo, not origin
+ASPARSA_YOGA_ID = 18   # Convergent cluster: contactless seeing
+
+# Convergent cluster limb IDs (resting stance composite)
+CONVERGENT_CLUSTER_IDS = [BODHI_ID, REST_AS_REALIZATION_ID, MIRROR_ID, AJATI_ID, ASPARSA_YOGA_ID]
 
 
 def get_limb_weight(field_state, limb_id: int) -> float:

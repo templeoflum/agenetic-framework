@@ -62,6 +62,7 @@ def _make_sample_state(input_data="test input") -> SystemState:
         "escalation_recommended": False, "escalation_confidence": 0.5,
         "matched_pattern_ids": [], "primed_associations": [],
     }
+    state["conscious_output"] = None  # Conscious hasn't fired in sample state
     state["motor_output"] = {
         "output_text": input_data if isinstance(input_data, str) else str(input_data),
         "target_profile": {

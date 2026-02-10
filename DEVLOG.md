@@ -371,8 +371,73 @@ Key insight: Strategy behavior is significantly input-dependent. Tarka produces 
 
 ---
 
+## 2026-02-09 — Directive 011: Conscious Layer Foundation
+
+**Tests:** 262 passing (24 new, 238 existing, 1 skipped)
+
+First implementation of the conscious layer — the system's crossing from signal domain into semantic domain. Replaced the pass-through stub with three foundational components: ConsciousOutput contract, proceed/suppress gate, and Deliberator protocol.
+
+### ConsciousOutput contract (Part A)
+
+Defined 4 new TypedDicts in base.py: `ResponseDecision` (intent, strategy, constraints), `ExpressionDirectives` (field weights, active limbs, resting stance, suppress_identity, state_awareness), `Lineage` (Ātma-Vichāra structural requirement — always present), `ConsciousOutput` (decision + expression + lineage + proceed + confidence). Added `conscious_output` to SystemState and GraphState.
+
+Added all 18 limb ID constants to base.py (was 9, now 18). Added `CONVERGENT_CLUSTER_IDS` list for the resting stance composite.
+
+### Proceed/suppress gate (Part B)
+
+Pure Python, no LLM call. Fires BEFORE any tokens are spent. Priority order (first match wins):
+
+1. **Immune override** — always proceed (threat_action == "escalate")
+2. **Ārēka suppression** — weight > 0.7 AND classification == "noise"
+3. **Nivṛtti pause** — weight > 0.7 AND aggregate_deviation < 0.5
+4. **Resting stance** — convergent cluster composite > 0.8 AND deviation < 0.3
+5. **Default** — proceed
+
+Gate produces a full evaluation dict with all weights, thresholds, and the triggering reason. Suppression produces a complete ConsciousOutput (proceed=False, confidence=1.0, strategy="sacred_pause") — not None.
+
+### Deliberator protocol (Part C)
+
+`Deliberator` is a `runtime_checkable Protocol` (structural typing, not ABC). Any object with `deliberate(request: DeliberationRequest) -> ConsciousOutput` is a Deliberator.
+
+Three implementations:
+- **MockDeliberator** — deterministic, tracks call count and last request. Used in all tests.
+- **AnthropicDeliberator** — first real LLM-backed implementation. Translates field state into behavioral system prompt instructions, makes one API call (claude-sonnet-4-20250514), parses JSON response. Handles parse failures with fallback.
+- Protocol is extensible to local models, Claude Code native context, or any other backend.
+
+### Conscious system (Part D)
+
+`ConsciousSystem.__init__` accepts optional `Deliberator`. Handles three paths:
+
+- **No signal report** — returns state with degradation flag, no output
+- **Gate suppresses** — produces suppression ConsciousOutput, zero LLM tokens spent
+- **Gate proceeds + deliberator** — builds DeliberationRequest, calls deliberator, patches lineage with gate evaluation
+- **Gate proceeds + no deliberator** — degraded output (proceed=True, confidence=0.0)
+
+Repair check verifies: lineage completeness (Ātma-Vichāra structural requirement), confidence threshold (proceed=True + confidence < 0.1 = fail). Apoptotic condition triggers after 3 consecutive low-confidence deliberations.
+
+### Convergent cluster as composite resting stance
+
+Five limbs (Bodhi, Mirror, Ajāti, Asparśa-Yoga, Rest as Realization) treated as one behavioral dimension: mean of their weights. High composite = system recedes from output. Low composite = system projects into output. This is a testable hypothesis — if conscious produces distinguishably different outputs for individual cluster members, the composite can be decomposed later.
+
+### Expression directives
+
+Field state translated into behavioral parameters:
+- Active limbs: weight outside ±0.1 of 0.5 midpoint
+- Resting stance: convergent cluster composite
+- suppress_identity: No-Position (limb 13) weight > 0.6
+- state_awareness: Fourfold State (limb 16) — "active", "reflective", "consolidated", "still"
+- Limb behavioral instructions in Anthropic deliberator system prompt
+
+### Tests
+
+24 new tests in test_conscious.py: 9 gate logic, 3 structure, 3 protocol, 8 integration (including graph flow), 1 API (skipped without credentials). Updated test_graph.py to use MockDeliberator. Updated test_systems.py sample state with conscious_output.
+
+---
+
 ## What's Next
 
-The signal domain is audited, remediated, and documented. Path is clear for the conscious layer:
+Conscious layer foundation is in place. Next directives:
 
-- **Conscious layer** — first LLM-backed system, semantic domain crossing. 8-9 limbs identified as needing semantic processing. Convergent cluster needs differentiation. Signal domain provides verified infrastructure for the conscious layer to build on.
+- **012 — Prompt assembly refinement** — Semantic limb expression. Field state → behavioral framing for LLM. Most conceptually dense step.
+- **013 — Motor codec refactor** — Pure restructuring. Extract text strategies into TextCodec. Zero behavior change.
+- **014 — Integration** — Motor renders from ConsciousOutput. Subconscious output consumed by conscious. End-to-end escalated path.

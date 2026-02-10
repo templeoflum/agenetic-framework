@@ -1,8 +1,8 @@
 # Current State
 
-**Last updated:** 2026-02-09 (post-Directive 010)
-**Tests:** 238 passing (was 237, +1 multi-input calibration surface)
-**Last directive:** 010 — Audit Remediation
+**Last updated:** 2026-02-09 (post-Directive 011)
+**Tests:** 262 passing + 1 skipped (was 238, +24 conscious tests)
+**Last directive:** 011 — Conscious Layer Foundation
 
 ## System Status
 
@@ -11,7 +11,7 @@
 | Sensory | Implemented (~390 LOC) | 23 (test_systems) + contributions to test_graph, test_round_trip |
 | Immune | Implemented (210 LOC) | 18 (test_systems) + contributions to test_graph |
 | Subconscious | Implemented (186 LOC) | 17 (test_systems) + contributions to test_graph |
-| Conscious | Stub (pass-through) | 7 (parametrized interface only) |
+| Conscious | Foundation (~440 LOC + 360 LOC deliberators) | 7 (test_systems) + 24 (test_conscious) + 1 (test_graph) |
 | Motor | Implemented (~620 LOC) | 7 (test_systems) + 58 (test_motor) + 44 (test_round_trip) |
 | Sleep | Stub (pass-through, has WRITE_TOKEN) | 7 (parametrized interface only) |
 | Genetic | Stub (pass-through) | 7 (parametrized interface only) |
@@ -21,45 +21,44 @@
 | File | Tests | Scope |
 |---|---|---|
 | test_systems.py | 94 | Parametrized interface tests (all 7 systems) + system-specific tests |
+| test_conscious.py | 24+1 | Gate logic (9), output structure (3), protocol (3), integration (8), graph (1), API (1 skipped) |
 | test_motor.py | 58 | Motor unit tests (strategies, determinism, field sensitivity, repair) |
 | test_round_trip.py | 44 | Motor-sensory feedback loop, calibration sweep, multi-input surface |
 | test_graph.py | 18 | LangGraph compilation, routing, signal-domain flow |
 | test_topology.py | 24 | Connection matrix verification |
 
-## Changes in Directive 010
+## Changes in Directive 011
 
-### Per-feature delta computation (Part A — biggest change)
-Sensory delta now uses per-feature references from the shared `compute_target_profile()` function in base.py, matching the motor's target profile formulas. Both systems import the same function. The old global-mean delta was dimensionally incoherent.
+### ConsciousOutput contract (Part A)
+New TypedDicts in base.py: `ResponseDecision`, `ExpressionDirectives`, `Lineage`, `ConsciousOutput`. Added `conscious_output` to `SystemState` and `GraphState`. Extended limb ID constants from 9 to all 18 + `CONVERGENT_CLUSTER_IDS` list.
 
-Aggregate deviation for clean prose at default weights: ~0.97 (was ~2.0 with global mean). The subconscious escalation threshold (1.5) is now above the clean-prose deviation, meaning clean text no longer automatically escalates.
+### Proceed/suppress gate (Part B)
+Pure Python, no LLM. Priority: immune override → Ārēka suppression (noise) → Nivṛtti pause (low deviation) → resting stance (deep rest + minimal stimulus) → default proceed. Gate produces full evaluation dict. Suppression yields complete ConsciousOutput with proceed=False.
 
-### Shared target profile (Part A)
-`compute_target_profile()`, `get_limb_weight()`, `mean_limb_weight()`, and all limb ID constants extracted from motor.py into base.py. Motor and sensory both import from base.py. Formulas can no longer drift apart.
+### Deliberator protocol (Part C)
+`Deliberator` — runtime_checkable Protocol (structural typing). `DeliberationRequest` — structured input. `MockDeliberator` — deterministic, test-friendly. `AnthropicDeliberator` — first real LLM implementation (claude-sonnet-4-20250514), prompt-side limb expression, JSON parsing with fallback.
 
-### Bigram entropy (Part G)
-`bigram_entropy` added to SignalFeatures (Shannon entropy over character bigram frequency distribution). Tarka does NOT register against bigram_entropy — sentence-level restructuring preserves character bigram patterns as well as token frequencies. **Tarka is definitively semantic-domain.**
+### Conscious system integration (Part D)
+`ConsciousSystem.__init__` accepts optional Deliberator. Three code paths: missing signal report (degrade), gate suppresses (no LLM), gate proceeds (call deliberator or degrade if none). Repair checks lineage completeness and confidence. Apoptotic after 3 low-confidence streak.
 
-### Multi-input calibration surface (Part F)
-5 input types: clean_prose, noisy_text, short_input, code_like, long_repetitive. 180 sweep points (5 inputs x 18 limbs x 2 weights). Key finding: Tarka DOES produce measurable entropy delta on long_repetitive input (+0.39 at weight 0.0) — the response is input-dependent.
+### Convergent cluster
+Five limbs (Bodhi 12, Rest-as-Realization 14, Mirror 15, Ajāti 17, Asparśa-Yoga 18) treated as composite resting stance: mean of weights. High = recede, Low = project. Testable hypothesis — decompose if conscious produces distinguishable behavior for individual members.
 
-### Documentation (Parts C/D/E/H)
-- "Calibration Validity" section added to ARCHITECTURE.md (tautological pattern documented)
-- "Engineering Assignments" section added to ARCHITECTURE.md (limb mappings are design decisions)
-- "confirmed" → "verified" across DEVLOG.md, CURRENT.md, planning entries
-- Status labels updated: architecture_amendment.md and signal_report_structure.md now say "Implemented"
-- ARCHITECTURE.md status section rewritten to reflect actual implementation state
-- Audit protocol section added to CLAUDE.md
-- README.md project tree fixed
+### Expression directives
+Active limbs: weight outside 0.4–0.6. No-Position (13) > 0.6 = suppress_identity. Fourfold State (16): >0.7 reflective, <0.3 still, <0.4 consolidated, else active. Field weights snapshot for all 18 limbs.
 
-### Bug fixes
-- `test_motor.py::_vary_single_limb` baseline fixed from 1.0 to 0.5 (Part B)
-- `_make_sample_state` in test_systems.py: added `transform_magnitude`, fixed `coherence` target from 0.7 to 0.35
-- Stale comment in test_graph.py updated (field reference 1.0 → per-feature)
-- Unused `dataclass` import removed from base.py
+## New Files Created
+
+| File | Purpose |
+|---|---|
+| `src/agenetic/systems/deliberator.py` | Deliberator Protocol, DeliberationRequest, MockDeliberator |
+| `src/agenetic/systems/deliberator_anthropic.py` | AnthropicDeliberator (first real LLM backend) |
+| `tests/test_conscious.py` | All conscious system tests (gate, structure, protocol, integration) |
+| `planning/011_conscious_foundation.md` | Planning entry (copy of state.md) |
 
 ## Orientational Field
 
-All 18 Asparśa limbs at 0.5 midpoint. Per-feature reference formulas:
+All 18 Asparśa limbs at 0.5 midpoint. Per-feature reference formulas unchanged from D010:
 
 | Feature | Formula | At 0.5 |
 |---|---|---|
@@ -77,6 +76,7 @@ All 18 Asparśa limbs at 0.5 midpoint. Per-feature reference formulas:
 - Round-trip calibration: motor -> sensory feedback loop, multi-input surface (5 inputs x 18 limbs x 2 weights = 180 points)
 - Connection matrix: 17 primary (weight 1.0) + 6 secondary (weight 0.5), 3 absent connections enforced
 - Shared target profile in base.py (sensory + motor import same function)
+- Deliberator protocol: structural typing, swappable backends (Mock, Anthropic API)
 
 ## Active Blockers
 
@@ -84,4 +84,6 @@ All 18 Asparśa limbs at 0.5 midpoint. Per-feature reference formulas:
 
 ## Next Directive Candidates
 
-- **Conscious layer** — first LLM-backed system, semantic domain crossing. Signal domain is audited, remediated, and documented. 8-9 limbs identified as needing semantic processing. Convergent cluster needs differentiation.
+- **012 — Prompt assembly refinement** — Semantic limb expression. Field state → behavioral framing for LLM. Most conceptually dense step.
+- **013 — Motor codec refactor** — Pure restructuring. Extract text strategies into TextCodec. Zero behavior change.
+- **014 — Integration** — Motor renders from ConsciousOutput. Subconscious output consumed by conscious. End-to-end escalated path.

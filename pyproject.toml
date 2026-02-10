@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 dependencies = [
     "langgraph",
     "langchain-anthropic",
+    "anthropic",
 ]
 
 [project.optional-dependencies]

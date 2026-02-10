@@ -15,6 +15,7 @@ from agenetic.systems.conscious import ConsciousSystem
 from agenetic.systems.motor import MotorSystem
 from agenetic.systems.sleep import SleepSystem
 from agenetic.systems.genetic import GeneticSystem
+from agenetic.systems.deliberator import MockDeliberator
 
 
 def _build_default_graph():
@@ -22,7 +23,7 @@ def _build_default_graph():
         sensory=SensorySystem(),
         immune=ImmuneSystem(),
         subconscious=SubconsciousSystem(),
-        conscious=ConsciousSystem(),
+        conscious=ConsciousSystem(deliberator=MockDeliberator()),
         motor=MotorSystem(),
         sleep=SleepSystem(),
         genetic=GeneticSystem(),
