@@ -64,7 +64,7 @@ def create_default_state(
         },
         "flags": {
             "degraded": [],
-            "escalate_to_conscious": True,  # Phase 1 default: always escalate
+            "escalate_to_conscious": False,  # Subconscious drives escalation
             "apoptotic": False,
         },
         "signal_report": None,

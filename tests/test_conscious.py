@@ -505,10 +505,9 @@ class TestConsciousGraphIntegration:
             sleep=SleepSystem(),
             genetic=GeneticSystem(),
         )
-        state = create_default_state(input_data="The quick brown fox jumps over the lazy dog.")
+        # Use high-deviation input so subconscious naturally escalates.
+        state = create_default_state(input_data="test")
         result = graph.invoke(state)
-
-        # Conscious should have fired (default escalate_to_conscious=True).
         assert "conscious" in result["metadata"]["routing_history"]
 
         # conscious_output should be present.

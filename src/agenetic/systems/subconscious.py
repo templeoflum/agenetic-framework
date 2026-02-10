@@ -125,10 +125,12 @@ class SubconsciousSystem(BaseSystem):
             escalation_recommended = False
             escalation_confidence = 0.5
 
-        # --- Update flags (only set, never unset) ---
+        # --- Update flags ---
         flags = {**state["flags"]}
         if escalation_recommended:
             flags["escalate_to_conscious"] = True
+        else:
+            flags["escalate_to_conscious"] = False
 
         # --- Update cache ---
         outcome = "escalated" if escalation_recommended else "reflex_response"

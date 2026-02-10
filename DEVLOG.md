@@ -534,11 +534,52 @@ Moved functions are re-exported from motor.py via import for backward compatibil
 
 ---
 
+## 2026-02-10 — Directive 014: Integration — Conditional Escalation, Conscious-Motor Wiring
+
+**Tests:** 320 passing (16 new, 304 existing, 2 skipped)
+
+Closed three structural gaps that kept individually-complete systems isolated: activated conditional escalation, wired conscious output to motor, and verified all three routing paths end-to-end.
+
+### Conditional escalation activated (Part A)
+
+One-line change: `escalate_to_conscious=False` in `create_default_state()`. Subconscious now drives escalation instead of everything always escalating. The conditional routing in the graph was already built — this activates it.
+
+Subconscious escalation logic (unchanged): threat_level medium/high/critical → escalate; novel signal with aggregate_deviation > 1.5 → escalate; cached patterns with more escalated outcomes → escalate. Low-deviation familiar inputs stay on the reflex path.
+
+### Subconscious explicit flag reset (Part C)
+
+Added explicit `flags["escalate_to_conscious"] = False` when subconscious doesn't recommend escalation. Defense-in-depth: prevents stale True flags from previous graph invocations causing spurious escalation.
+
+### Conscious-motor wiring (Part B)
+
+Motor now checks `state["conscious_output"]` before codec delegation:
+- **Suppression path:** If conscious proceed=False, motor produces empty output with `strategies_applied=["conscious_suppression"]` and `repair_passed=True`. No codec invocation.
+- **Proceed path:** Motor records `conscious_strategy` metadata from the conscious decision (informational only — doesn't affect text restructuring).
+- **Reflex path:** When conscious_output is None (reflex path), motor behavior is unchanged.
+
+Two suppression mechanisms now coexist: conscious suppression (fires before codec, this directive) and Areka suppression (fires inside codec, existing). If conscious suppresses, Areka never checks. If conscious proceeds, Areka might still suppress at the codec level.
+
+### Integration tests (Part D)
+
+16 new tests in `test_integration.py` covering three end-to-end paths:
+- **Reflex (4):** Low-deviation input → subconscious doesn't escalate → motor processes directly. Conscious not in routing. Signal report, threat, subconscious output all populated.
+- **Escalated (4):** High-deviation input → subconscious escalates → conscious deliberates (MockDeliberator) → motor receives conscious output. Motor records conscious_strategy.
+- **Suppression (3):** High Areka + noise input → conscious gate suppresses → motor produces empty output. Deliberator call_count == 0.
+- **Routing (3):** Default is reflex. Medium threat triggers escalation. Cached reflex patterns stay reflex.
+- **Cross-path (2):** Motor output always exists. Signal report structure preserved on both paths.
+
+### Existing test fixes
+
+Two tests updated for the new default:
+- `test_systems.py::test_escalation_flag_never_unset` → renamed `test_escalation_flag_explicitly_reset` — now verifies subconscious explicitly resets the flag.
+- `test_conscious.py::test_graph_conscious_output_flows_to_motor` → changed input to high-deviation text that naturally triggers escalation.
+
+---
+
 ## What's Next
 
-Codec architecture is in place. Next directives:
+Integration is complete. Next directives:
 
-- **014 — Integration** — Motor renders from ConsciousOutput. Subconscious output consumed by conscious. End-to-end escalated path.
 - **015 — Mechanical audit** — DNAgent reads everything, reports raw. Zero code changes.
 - **016 — Conceptual audit** — Fresh planning instance, adversarial posture. Key question: prompt assembly theater or genuine expression?
 - **017 — Remediation.**

@@ -99,6 +99,18 @@ class MotorSystem(BaseSystem):
         # Compute target profile from field weights.
         target = _compute_target_profile(field_state)
 
+        # Check conscious output for suppression.
+        conscious_output = state.get("conscious_output")
+        if conscious_output is not None and not conscious_output.get("proceed", True):
+            motor_output: MotorOutput = {
+                "output_text": "",
+                "target_profile": target,
+                "strategies_applied": ["conscious_suppression"],
+                "repair_passed": True,
+                "transform_magnitude": 0.0,
+            }
+            return {**state, "motor_output": motor_output}
+
         # Handle empty/None input.
         if not text:
             motor_output: MotorOutput = {
@@ -158,6 +170,10 @@ class MotorSystem(BaseSystem):
             "repair_passed": repair_passed,
             "transform_magnitude": transform_magnitude,
         }
+
+        # Record conscious strategy if available.
+        if conscious_output is not None and conscious_output.get("proceed"):
+            motor_output["conscious_strategy"] = conscious_output["decision"].get("strategy", "unknown")
 
         return {**state, "motor_output": motor_output}
 
