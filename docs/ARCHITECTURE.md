@@ -434,9 +434,33 @@ Add genetic expression modification:
 
 ---
 
+## Calibration Validity
+
+The round-trip calibration framework (motor → sensory feedback loop) validates **plumbing** — that motor strategies produce measurable changes in sensory features. It does not validate that the limb-to-feature mappings are philosophically or semantically correct.
+
+**The tautological pattern:** Strategies whose transformation mechanism directly overlaps with their measurement mechanism produce guaranteed confirmation. For example:
+
+- **Coherence** (Samatvam): Motor bridges words between sentences. Sensory measures word overlap between sentences. Same mechanism, different names. Confirmation is by construction.
+- **Impedance** (Nivṛtti): Motor strips non-ASCII characters. Sensory measures non-ASCII ratio. Confirmation is guaranteed.
+- **Periodicity** (Prakāśa): Motor repeats phrases at intervals. Sensory measures bigram repetition. Same thing.
+
+**The informative failure:** Tarka's entropy strategy rearranges sentences (structural change) while sensory measures token frequency distribution (vocabulary-level measurement). These operate on different levels of text. The strategy fires but sensory measures the same entropy on the restructured text. This is the one case where the calibration can discriminate — and it shows the strategy doesn't cross levels.
+
+**Terminology:** Results are called "verified connections" (plumbing works) rather than "confirmed mappings" (which implies empirical discovery). True validation of whether these limb-to-feature assignments produce meaningful behavioral differences requires the conscious layer.
+
+## Engineering Assignments
+
+The mapping from yoga limbs to signal features is an engineering assignment, not a philosophical derivation. Prakāśa governs periodicity in the motor because periodicity needed a governing limb and Prakāśa's description ("perceive without possession") was interpreted as cyclical perception. Other mappings were equally plausible. Śraddhā governs noise floor because "don't replace mystery with noise" was read as literally noise floor — a reassignment, not a discovery.
+
+The conscious layer is free to interpret limb meanings differently at the semantic level than the motor encodes them at the signal level. Signal-level mappings are transfer function coefficients, not truth claims about what the limbs mean.
+
+The planning documents (Directives 007, 008) carry honest caveats about this. The code should not be treated as canonizing what the planning documents describe as preliminary.
+
+---
+
 ## Status
 
-v2 conceptual architecture. Derived from collaborative conversation, not yet implemented. The implementation pathway is scoped to available resources (local compute, API access, LangGraph or equivalent orchestration framework).
+Phase 1 (Minimal Viable Cell) is partially implemented. The signal-domain tier (sensory, immune, subconscious) and motor layer are operational. Conscious, sleep, and genetic remain stubs. The orientational field is implemented with sleep-only write access. Apoptotic conditions are implemented on all systems. The connection matrix is declarative (weights not yet used by graph routing).
 
 v1 → v2 changes: network topology replaces loop, temporal stratification added, inline repair added, homeostatic regulation added, apoptotic exit conditions added, immune system upgraded to adaptive, implementation pathway phased for incremental building.
 

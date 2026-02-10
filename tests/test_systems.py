@@ -42,6 +42,7 @@ def _make_sample_state(input_data="test input") -> SystemState:
         "features": {
             "density": 0.8, "entropy": 3.5, "coherence": 0.7,
             "periodicity": 0.1, "noise_floor": 0.05, "impedance": 0.1,
+            "bigram_entropy": 3.0,
             "token_count": 2, "vocabulary_richness": 1.0,
         },
         "classification": {"signal_type": "steady_state", "confidence": 0.9, "components": []},
@@ -64,12 +65,14 @@ def _make_sample_state(input_data="test input") -> SystemState:
     state["motor_output"] = {
         "output_text": input_data if isinstance(input_data, str) else str(input_data),
         "target_profile": {
-            "density": 0.8, "entropy": 3.5, "coherence": 0.7,
+            "density": 0.8, "entropy": 3.5, "coherence": 0.35,
             "periodicity": 0.0, "noise_floor": 0.0, "impedance": 0.0,
+            "bigram_entropy": 0.0,
             "token_count": 0, "vocabulary_richness": 0.0,
         },
         "strategies_applied": [],
         "repair_passed": True,
+        "transform_magnitude": 0.0,
     }
     return state
 

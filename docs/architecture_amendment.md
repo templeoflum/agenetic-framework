@@ -1,7 +1,7 @@
 # Architecture Amendment: The Signal-Semantics Boundary
 
 **Date:** 2026-02-08  
-**Status:** Proposed  
+**Status:** Implemented (Directive 002)  
 **Affects:** All seven systems, temporal stratification, core principles  
 
 ---

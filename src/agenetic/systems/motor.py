@@ -21,39 +21,23 @@ import re
 from collections import Counter
 
 from agenetic.systems.base import (
+    AREKA_ID,
     BaseSystem,
+    KSETRA_JNANA_ID,
+    MAYAVADA_ID,
     MotorOutput,
+    PRAKASA_ID,
+    SAMATVAM_ID,
+    SRADDHA_ID,
+    SVADHARMA_ID,
     SignalFeatures,
     SystemState,
+    TARKA_ID,
+    compute_target_profile as _compute_target_profile,
+    get_limb_weight as _get_limb_weight,
+    mean_limb_weight as _mean_weight,
+    NIVRTTI_ID,
 )
-
-# Limb IDs that govern specific strategies.
-PRAKASA_ID = 1     # Periodicity modulation (inverse: more Prakasa = less forced pattern)
-TARKA_ID = 2       # Entropy modulation (more Tarka = more variety)
-NIVRTTI_ID = 3     # Impedance modulation (inverse: more Nivrtti = simpler output)
-SAMATVAM_ID = 7    # Coherence modulation (more Samatvam = more coherent)
-SRADDHA_ID = 5     # Noise floor modulation (inverse: more Sraddha = less noise)
-MAYAVADA_ID = 4    # Transformation magnitude cap (direct: more = less deviation from source)
-AREKA_ID = 8       # Output suppression gate (threshold: suppresses high-noise high-entropy)
-SVADHARMA_ID = 9   # Strategy selectivity (direct: more = higher thresholds)
-KSETRA_JNANA_ID = 10  # Delta sensitivity scaling (direct: more = respond to smaller deltas)
-
-
-def _get_limb_weight(field_state, limb_id: int) -> float:
-    """Get a specific limb weight from the field state."""
-    limbs = field_state.get("limbs", [])
-    for limb in limbs:
-        if limb["id"] == limb_id:
-            return limb["weight"]
-    return 0.5
-
-
-def _mean_weight(field_state) -> float:
-    """Compute mean of all limb weights."""
-    limbs = field_state.get("limbs", [])
-    if not limbs:
-        return 0.5
-    return sum(limb["weight"] for limb in limbs) / len(limbs)
 
 
 def _to_str(input_data) -> str:
@@ -63,38 +47,6 @@ def _to_str(input_data) -> str:
     if isinstance(input_data, str):
         return input_data
     return str(input_data)
-
-
-def _compute_target_profile(field_state) -> SignalFeatures:
-    """Compute target signal features from orientational field weights.
-
-    Symmetric around 0.5 midpoint: target = base + (weight - 0.5) * scale.
-    At 0.5 (default), targets match typical text features — minimal
-    transformation. Above 0.5 amplifies; below 0.5 suppresses.
-
-    With default weights (all 0.5), produces neutral targets:
-    density=0.8, entropy=3.5, coherence=0.35, impedance=0.0,
-    periodicity=0.0, noise_floor=0.0.
-    """
-    mean_w = _mean_weight(field_state)
-    tarka_w = _get_limb_weight(field_state, TARKA_ID)
-    samatvam_w = _get_limb_weight(field_state, SAMATVAM_ID)
-    nivrtti_w = _get_limb_weight(field_state, NIVRTTI_ID)
-    prakasa_w = _get_limb_weight(field_state, PRAKASA_ID)
-    sraddha_w = _get_limb_weight(field_state, SRADDHA_ID)
-
-    return {
-        # Direct: more weight = higher target.
-        "density": min(max(0.8 + (mean_w - 0.5) * 0.4, 0.0), 1.0),
-        "entropy": max(3.5 + (tarka_w - 0.5) * 3.0, 0.0),
-        "coherence": min(max(0.35 + (samatvam_w - 0.5) * 0.7, 0.0), 1.0),
-        # Inverse: more weight = lower target (less forced pattern/noise/impedance).
-        "periodicity": min(max((0.5 - prakasa_w) * 0.6, 0.0), 1.0),
-        "noise_floor": min(max((0.5 - sraddha_w) * 0.6, 0.0), 1.0),
-        "impedance": min(max((0.5 - nivrtti_w) * 0.6, 0.0), 1.0),
-        "token_count": 0,            # not directly targeted
-        "vocabulary_richness": 0.0,   # derived from entropy strategy
-    }
 
 
 # ============================================================
@@ -494,6 +446,7 @@ class MotorSystem(BaseSystem):
             current: SignalFeatures = {
                 "density": 0.5, "entropy": 2.0, "coherence": 0.5,
                 "periodicity": 0.0, "noise_floor": 0.0, "impedance": 0.0,
+                "bigram_entropy": 0.0,
                 "token_count": len(text.split()), "vocabulary_richness": 0.5,
             }
 

@@ -15,7 +15,7 @@ The conscious layer needs to know what's expected of it — specifically, which 
 
 Post-004 analysis categorized every limb against the question: could varying this limb produce measurably different text restructuring, without an LLM, at signal level?
 
-**Have strategies, apparatus-confirmed (3):** Prakāśa → periodicity, Nivṛtti → impedance, Samatvam → coherence
+**Have strategies, apparatus-verified (3):** Prakāśa → periodicity, Nivṛtti → impedance, Samatvam → coherence
 
 **Has strategy, needs tuning (1):** Tarka → entropy (sentence-level approach replacing token-level)
 

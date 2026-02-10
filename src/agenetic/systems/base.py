@@ -7,7 +7,6 @@ The SystemState TypedDict defines the shared state passed between systems.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from typing import Any, Literal, TypedDict
 
 
@@ -67,6 +66,7 @@ class SignalFeatures(TypedDict):
     periodicity: float
     noise_floor: float
     impedance: float
+    bigram_entropy: float
     token_count: int
     vocabulary_richness: float
 
@@ -221,3 +221,76 @@ class BaseSystem(ABC):
         Returns False under normal operation.
         """
         ...
+
+
+# ============================================================
+# Shared limb constants and target profile computation
+# ============================================================
+# These are engineering assignments — the mapping from yoga limbs to
+# signal features is a design decision, not a philosophical derivation.
+# See docs/ARCHITECTURE.md "Engineering Assignments" section.
+
+PRAKASA_ID = 1     # Periodicity modulation (inverse)
+TARKA_ID = 2       # Entropy modulation
+NIVRTTI_ID = 3     # Impedance modulation (inverse)
+MAYAVADA_ID = 4    # Transformation magnitude cap
+SRADDHA_ID = 5     # Noise floor modulation (inverse)
+SAMATVAM_ID = 7    # Coherence modulation
+AREKA_ID = 8       # Output suppression gate
+SVADHARMA_ID = 9   # Strategy selectivity
+KSETRA_JNANA_ID = 10  # Delta sensitivity scaling
+
+
+def get_limb_weight(field_state, limb_id: int) -> float:
+    """Get a specific limb weight from the field state."""
+    limbs = field_state.get("limbs", [])
+    for limb in limbs:
+        if limb["id"] == limb_id:
+            return limb["weight"]
+    return 0.5
+
+
+def mean_limb_weight(field_state) -> float:
+    """Compute mean of all limb weights."""
+    limbs = field_state.get("limbs", [])
+    if not limbs:
+        return 0.5
+    return sum(limb["weight"] for limb in limbs) / len(limbs)
+
+
+def compute_target_profile(field_state) -> SignalFeatures:
+    """Compute target signal features from orientational field weights.
+
+    Symmetric around 0.5 midpoint: target = base + (weight - 0.5) * scale.
+    At 0.5 (default), targets match typical text features — minimal
+    transformation. Above 0.5 amplifies; below 0.5 suppresses.
+
+    This is the shared reference used by both sensory (as per-feature
+    reference for delta computation) and motor (as target profile for
+    restructuring). Extracting it here prevents the formulas from
+    drifting apart.
+
+    With default weights (all 0.5), produces neutral targets:
+    density=0.8, entropy=3.5, coherence=0.35, impedance=0.0,
+    periodicity=0.0, noise_floor=0.0.
+    """
+    mean_w = mean_limb_weight(field_state)
+    tarka_w = get_limb_weight(field_state, TARKA_ID)
+    samatvam_w = get_limb_weight(field_state, SAMATVAM_ID)
+    nivrtti_w = get_limb_weight(field_state, NIVRTTI_ID)
+    prakasa_w = get_limb_weight(field_state, PRAKASA_ID)
+    sraddha_w = get_limb_weight(field_state, SRADDHA_ID)
+
+    return {
+        # Direct: more weight = higher target.
+        "density": min(max(0.8 + (mean_w - 0.5) * 0.4, 0.0), 1.0),
+        "entropy": max(3.5 + (tarka_w - 0.5) * 3.0, 0.0),
+        "coherence": min(max(0.35 + (samatvam_w - 0.5) * 0.7, 0.0), 1.0),
+        # Inverse: more weight = lower target (less forced pattern/noise/impedance).
+        "periodicity": min(max((0.5 - prakasa_w) * 0.6, 0.0), 1.0),
+        "noise_floor": min(max((0.5 - sraddha_w) * 0.6, 0.0), 1.0),
+        "impedance": min(max((0.5 - nivrtti_w) * 0.6, 0.0), 1.0),
+        "bigram_entropy": 0.0,        # not directly targeted (Tarka measurement)
+        "token_count": 0,            # not directly targeted
+        "vocabulary_richness": 0.0,   # derived from entropy strategy
+    }

@@ -1,7 +1,7 @@
 # Signal Report Structure
 
 **Date:** 2026-02-08  
-**Status:** Proposed  
+**Status:** Implemented (Directive 002)  
 **Implements:** Architecture Amendment (Signal-Semantics Boundary)  
 **Consumed by:** Sensory (producer), Immune (consumer), Subconscious (consumer), Conscious (consumer on escalation)  
 

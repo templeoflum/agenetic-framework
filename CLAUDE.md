@@ -108,6 +108,21 @@ agenetic-framework/
 └── tests/
 ```
 
+## Audit Protocol
+
+Audits are triggered before major architectural transitions (e.g., before implementing a new domain tier). They produce two artifacts, both prefixed with the directive number that triggered them:
+
+1. **Mechanical audit** (`NNN_audit_report.md`): Produced by DNAgent via a zero-code-change directive. Reads every file, reports raw findings across a standard checklist (interface compliance, state flow, type consistency, test coverage, dead code, documentation accuracy). No interpretation.
+
+2. **Conceptual audit** (`NNN_conceptual_audit.md`): Produced by the planning instance in a fresh chat (clean context, no inherited assumptions). Reads the mechanical audit plus key source files. Evaluates architectural soundness, circular reasoning, self-fulfilling prophecies, logical gaps. Adversarial posture.
+
+Findings are triaged into:
+- **Must fix:** Blocks the next phase
+- **Should fix:** Improves quality, not blocking
+- **Watch:** Monitor during next phase
+
+A remediation directive follows, addressing must-fix items and low-cost should-fix items.
+
 ## Reference Material
 
 The `references/` directory contains source material that informs architecture decisions:

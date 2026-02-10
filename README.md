@@ -49,7 +49,7 @@ The signal-domain tier and motor layer are implemented and operational:
 - Weighted connection matrix defines all system-to-system communication paths
 - LangGraph orchestration with conditional routing (escalation → conscious, else → motor reflex)
 - Orientational field with all 18 Asparśa limbs, sleep-only write access enforced
-- 237 tests passing
+- 238 tests passing
 
 Conscious, sleep, and genetic remain stubs awaiting implementation.
 
@@ -66,7 +66,10 @@ See [`docs/signal_report_structure.md`](docs/signal_report_structure.md) for the
 ```
 agenetic-framework/
 ├── DEVLOG.md                        # What was built and why (repo memory)
-├── PLANNING_LOG.md                  # Decisions, rationale, open threads (chat memory)
+├── CLAUDE.md                        # Agent orientation and project conventions
+├── planning/                        # Planning state (entry-based)
+│   ├── CURRENT.md                   # Factual snapshot — DNAgent maintains from repo inspection
+│   └── NNN_<short_name>.md          # Numbered planning entries (one per cycle)
 ├── docs/
 │   ├── ARCHITECTURE.md              # Full v2 framework specification
 │   ├── DIRECTIVES.md                # How the directive system works
@@ -96,7 +99,7 @@ All coordination happens through files in `handoff/`. Every directive is a cold 
 - Python 3.11+
 - LangGraph for orchestration
 - Anthropic API for LLM calls (conscious layer, not yet implemented)
-- pytest (237 tests)
+- pytest (238 tests)
 
 ## License
 

@@ -52,7 +52,7 @@ def _make_motor_state(input_text=SAMPLE_TEXT, field=None):
     return state
 
 
-def _vary_single_limb(limb_id: int, weight: float, baseline: float = 1.0):
+def _vary_single_limb(limb_id: int, weight: float, baseline: float = 0.5):
     """Create an OrientationalField with one limb varied, others at baseline."""
     field = OrientationalField()
     limbs = field.read()["limbs"]

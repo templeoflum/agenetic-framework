@@ -135,8 +135,8 @@ Cleanup pass. No code changes.
 
 **Planning log replaced:** Full replacement with post-Directive 004 analysis including:
 - Calibration results table from round-trip sweep
-- Apparatus-vs-hypothesis interpretation caveat (confirmed plumbing works, semantic validation requires conscious layer)
-- Updated limb-to-feature mapping status (3 apparatus-confirmed, 1 below threshold, rest pending)
+- Apparatus-vs-hypothesis interpretation caveat (verified plumbing works, semantic validation requires conscious layer)
+- Updated limb-to-feature mapping status (3 apparatus-verified, 1 below threshold, rest pending)
 - DNAgent identity decision
 - Updated sequencing (Directive 006+ candidates: conscious layer, Tarka tuning, or sleep)
 
@@ -181,14 +181,14 @@ Extended the motor with 5 new limb-specific strategies and rewrote Tarka entropy
 |---|---|---|
 | Prakāśa | periodicity +0.0912 | Confirmed (both points) |
 | Tarka | entropy 0.0 | Still not registering — sentence-level merging produces same features |
-| Nivṛtti | impedance +0.3667 | Confirmed (both points) |
+| Nivṛtti | impedance +0.3667 | Verified (both points) |
 | Māyāvāda | 0.0 | Cap inactive at default weight (expected) |
-| Śraddhā | noise_floor +0.0541 | **New, confirmed** |
+| Śraddhā | noise_floor +0.0541 | **New, verified** |
 | Ātma-Vichāra | 0.0 | Uncategorized |
-| Samatvam | coherence −0.0263 | Confirmed, graded (0.0 at half-weight) |
+| Samatvam | coherence −0.0263 | Verified, graded (0.0 at half-weight) |
 | Ārēka | 0.0 | Gate inactive for clean calibration text (expected) |
 | Svadharma | 0.0 | Threshold scaling is second-order (expected) |
-| Kṣetra-Jñāna | coherence +0.0854, periodicity −0.0588 | **New, second-order confirmed** |
+| Kṣetra-Jñāna | coherence +0.0854, periodicity −0.0588 | **New, second-order verified** |
 | Limbs 11–18 | 0.0 | Convergent cluster + semantic domain (expected) |
 
 **Tarka honest report:** Entropy modulation fires (strategy applied) but the resulting text feeds back the same signal features through sensory. The sentence-level merge/split approach is deterministic and preserves token overlap for repair check, but the structural changes don't produce distinguishable entropy values in the sensory measurement. This may need a fundamentally different approach — or it may be that Tarka's signal-level expression is inherently weak compared to semantic-level variety.
@@ -246,7 +246,7 @@ Svadharma        -0.0006   -0.0946   +0.0345    -0.0588      +0.0000      +0.000
 All other limbs: zero delta at both 0.0 and 1.0 (no motor strategies assigned).
 
 **Comparison with 1.0 baseline data (Directive 007):**
-- Same 5 primary mappings confirmed: Prakāśa→periodicity, Nivṛtti→impedance, Samatvam→coherence, Śraddhā→noise_floor, Kṣetra-Jñāna→second-order
+- Same 5 primary mappings verified: Prakāśa→periodicity, Nivṛtti→impedance, Samatvam→coherence, Śraddhā→noise_floor, Kṣetra-Jñāna→second-order
 - Tarka still does not register as entropy change despite sentence-level approach and new formula
 - Asymmetric response pattern: suppression (0.0) produces more visible effects than amplification (1.0), because baseline strategies already fire at 0.5
 - Meta-strategies (Svadharma, Kṣetra-Jñāna) now clearly visible: they produce effects by *disabling* other strategies rather than directly modulating features
@@ -289,10 +289,90 @@ Full codebase audit before crossing into the semantic domain. Read every source 
 
 ---
 
+## 2026-02-09 — Directive 010: Audit Remediation
+
+**Tests:** 238 passing (1 new, 237 existing)
+
+Addressed all must-fix findings and low-cost should-fix items from the conceptual audit (`handoff/009_conceptual_audit.md`). The biggest change is the sensory delta fix; the rest is documentation, calibration infrastructure, and a new signal feature.
+
+### Per-feature delta computation (Part A — most consequential)
+
+The conceptual audit's Finding 8: sensory subtracted a single scalar (mean of all limb weights) from every feature value. Density (~0.8) and entropy (~4.0) compared against the same reference. Dimensionally incoherent.
+
+**Fix:** Per-feature references using the same formulas as motor's target profile. Extracted `compute_target_profile()`, `get_limb_weight()`, `mean_limb_weight()`, and all limb ID constants from motor.py into base.py. Both sensory and motor now import the same function. Formulas cannot drift apart.
+
+Aggregate deviation for clean prose at default weights: ~0.97 (was ~2.0 with global mean). The subconscious escalation threshold (1.5) is now above the clean-prose deviation — clean text no longer automatically escalates.
+
+### Bigram entropy (Part G)
+
+Added `bigram_entropy` to SignalFeatures — Shannon entropy over character bigram frequency distribution. Tarka does NOT register against bigram_entropy for clean prose — sentence-level restructuring preserves character bigram patterns as well as token frequencies. **Tarka is definitively semantic-domain** for typical text.
+
+However, the multi-input sweep (Part F) revealed that Tarka DOES produce +0.39 entropy delta on long_repetitive input. The response is input-dependent.
+
+### Multi-input calibration surface (Part F)
+
+5 input types × 18 limbs × 2 weights = 180 sweep points. Key findings by input type:
+
+**clean_prose** (baseline: 2 strategies fire)
+```
+Suppression (0.0):
+  Prakasa      periodicity: +0.0912, bigram_entropy: -0.0388
+  Nivrtti      impedance: +0.3667, bigram_entropy: +0.1175
+  Sraddha      noise_floor: +0.0541
+  Samatvam     coherence: -0.0263
+  Ksetra-Jnana periodicity: -0.0588 (second-order, delta scaled to zero)
+Amplification (1.0):
+  Tarka        coherence: +0.0854, entropy: +0.0244
+  Svadharma    periodicity: -0.0588 (threshold too high, no strategies fire)
+```
+
+**noisy_text** (baseline: 4 strategies fire — density, entropy, impedance, noise_floor)
+```
+Suppression: Prakasa periodicity: +0.1290, coherence: +0.1287; Samatvam coherence: -0.0238
+Amplification: Tarka noise_floor: +0.0769 (input-dependent side effect)
+```
+
+**short_input** (baseline: density + entropy only)
+```
+Suppression: Nivrtti impedance: +0.3667, entropy: +0.5850
+Amplification: (none — no limb variation produces additional strategies)
+```
+
+**code_like** (baseline: density, coherence, impedance)
+```
+Suppression: Prakasa periodicity: +0.1429, coherence: -0.8283
+Amplification: Tarka coherence: -1.0000 (single-sentence input); Ksetra-Jnana noise_floor: -0.0625
+```
+
+**long_repetitive** (baseline: coherence + periodicity)
+```
+Suppression: Tarka entropy: +0.3893 (Tarka's strongest signal!); Nivrtti impedance: +0.3667; Sraddha noise_floor: +0.0525
+Amplification: Samatvam entropy: +0.2140, coherence: +0.0302
+```
+
+Key insight: Strategy behavior is significantly input-dependent. Tarka produces zero entropy delta on clean prose but +0.39 on long repetitive text. Noisy text fires 4 baseline strategies (vs 2 for clean prose). Short input has minimal response surface.
+
+### Documentation (Parts C/D/E/H)
+
+- "Calibration Validity" section added to ARCHITECTURE.md — documents tautological pattern
+- "Engineering Assignments" section added to ARCHITECTURE.md — limb mappings are design decisions, not philosophical derivations
+- "confirmed" → "verified" across DEVLOG.md, CURRENT.md, planning entries
+- Status labels updated: architecture_amendment.md and signal_report_structure.md now say "Implemented (Directive 002)"
+- ARCHITECTURE.md status section rewritten to reflect actual implementation state
+- Audit protocol section added to CLAUDE.md
+- README.md project tree fixed
+
+### Bug fixes
+
+- `test_motor.py::_vary_single_limb` baseline fixed from 1.0 to 0.5 (Part B)
+- `_make_sample_state` in test_systems.py: added `transform_magnitude`, added `bigram_entropy`, fixed `coherence` target from 0.7 to 0.35
+- Stale comment in test_graph.py updated (field reference 1.0 → per-feature)
+- Unused `dataclass` import removed from base.py
+
+---
+
 ## What's Next
 
-Candidates for Directive 010+:
+The signal domain is audited, remediated, and documented. Path is clear for the conscious layer:
 
-- **Conceptual audit** — planning instance analyzes 009_audit_report.md in fresh context for circular reasoning, self-fulfilling prophecies, and architectural assumptions
-- **Fix directive** — address mechanical audit findings (triage by planning instance based on conceptual audit)
-- **Conscious layer** — first LLM-backed system, after audit clears. Clean calibration data at correct midpoint, 8-9 limbs confirmed as needing semantic processing, convergent cluster (8 limbs) needs differentiation
+- **Conscious layer** — first LLM-backed system, semantic domain crossing. 8-9 limbs identified as needing semantic processing. Convergent cluster needs differentiation. Signal domain provides verified infrastructure for the conscious layer to build on.

@@ -38,11 +38,33 @@ CALIBRATION_INPUT = (
     "Meanwhile the cat sleeps on the warm mat peacefully."
 )
 
+# Multiple calibration inputs for response surface characterization.
+CALIBRATION_INPUTS = {
+    "clean_prose": CALIBRATION_INPUT,
+    "noisy_text": (
+        "Th3 qu!ck br0wn f0x... ||marker|| #@$ jumps! "
+        "a ! b # c $ d % over & the * lazy ( dog ) . "
+        "The d0g b@rks loudly; the -- fox -- runs @@away."
+    ),
+    "short_input": "Hello world.",
+    "code_like": (
+        "def process(state): return {**state, 'output': transform(state['input'])} "
+        "# Handle edge cases for None and empty string inputs."
+    ),
+    "long_repetitive": (
+        "The cat sat on the mat. The cat sat on the mat. "
+        "The dog lay on the rug. The dog lay on the rug. "
+        "The bird sang in the tree. The bird sang in the tree. "
+        "The fish swam in the pond. The fish swam in the pond. "
+        "The cat sat on the mat. The dog lay on the rug."
+    ),
+}
+
 # All 18 limbs for parameterized calibration.
 ALL_LIMB_IDS = list(range(1, 19))
 
 # Feature keys to track in calibration.
-FEATURE_KEYS = ["density", "entropy", "coherence", "periodicity", "noise_floor", "impedance"]
+FEATURE_KEYS = ["density", "entropy", "coherence", "periodicity", "noise_floor", "impedance", "bigram_entropy"]
 
 
 def vary_single_limb(limb_id: int, weight: float, baseline: float = 0.5) -> OrientationalField:
@@ -383,3 +405,88 @@ def test_calibration_summary():
 
     # Assert we tested all 18 limbs at 2 non-baseline weight points.
     assert len(all_results) == 36
+
+
+# ============================================================
+# Multi-input calibration surface
+# ============================================================
+
+
+def _run_multi_input_sweep_at_weight(
+    weight: float, input_name: str, input_text: str, baseline_features: dict
+) -> list[dict]:
+    """Run calibration sweep for a specific input type at a specific weight."""
+    results = []
+    for limb_id in ALL_LIMB_IDS:
+        name = _LIMB_NAMES[limb_id]
+        field = vary_single_limb(limb_id, weight)
+        result = round_trip(input_text, field)
+
+        motor_out = result["motor_output"]
+        if motor_out["output_text"] == "" and "areka_suppression" in motor_out.get("strategies_applied", []):
+            varied_features = {k: 0.0 for k in FEATURE_KEYS}
+            suppressed = True
+        else:
+            varied_features = result["output_report"]["features"]
+            suppressed = False
+
+        deltas = {}
+        for key in FEATURE_KEYS:
+            deltas[key] = varied_features[key] - baseline_features[key]
+
+        results.append({
+            "input_name": input_name,
+            "limb_name": name,
+            "limb_id": limb_id,
+            "weight_value": weight,
+            "feature_deltas": deltas,
+            "strategies_applied": motor_out["strategies_applied"],
+            "suppressed": suppressed,
+        })
+    return results
+
+
+def test_calibration_surface():
+    """Multi-input calibration sweep — characterize response surface across input types.
+
+    Runs a three-point sweep (0.0, 0.5, 1.0) for each limb across all input
+    types in CALIBRATION_INPUTS. Prints a summary table per input type.
+    """
+    all_results = []
+
+    for input_name, input_text in CALIBRATION_INPUTS.items():
+        # Baseline for this input type.
+        field_baseline = OrientationalField()
+        baseline = round_trip(input_text, field_baseline)
+        baseline_features = baseline["output_report"]["features"]
+
+        print(f"\n{'=' * 100}")
+        print(f"INPUT TYPE: {input_name}")
+        print(f"Baseline features: " + " | ".join(
+            f"{k}: {baseline_features[k]:.4f}" for k in FEATURE_KEYS
+        ))
+        print(f"Baseline strategies: {baseline['motor_output']['strategies_applied']}")
+
+        for sweep_weight in [0.0, 1.0]:
+            label = "suppression" if sweep_weight == 0.0 else "amplification"
+            print(f"\n  --- {input_name} @ {sweep_weight} ({label}) ---")
+
+            results = _run_multi_input_sweep_at_weight(
+                sweep_weight, input_name, input_text, baseline_features
+            )
+
+            # Print only limbs that produced non-zero deltas.
+            for r in results:
+                deltas = r["feature_deltas"]
+                max_delta = max(abs(d) for d in deltas.values())
+                if max_delta > 0.001:
+                    delta_str = " | ".join(f"{k}: {deltas[k]:+.4f}" for k in FEATURE_KEYS)
+                    sup_tag = " [SUP]" if r["suppressed"] else ""
+                    print(f"    {r['limb_name']:<18}{sup_tag} {delta_str} | {', '.join(r['strategies_applied'])}")
+
+            all_results.extend(results)
+
+    # 5 inputs × 18 limbs × 2 weight points = 180.
+    expected = len(CALIBRATION_INPUTS) * 18 * 2
+    print(f"\nTotal surface points: {len(all_results)} ({len(CALIBRATION_INPUTS)} inputs × 18 limbs × 2 weights)")
+    assert len(all_results) == expected

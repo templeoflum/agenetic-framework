@@ -26,6 +26,7 @@ from agenetic.systems.base import (
     SignalFeatures,
     SignalReport,
     SystemState,
+    compute_target_profile,
 )
 
 
@@ -103,6 +104,27 @@ def _compute_noise_floor(tokens: list[str]) -> float:
         elif all(not c.isalnum() for c in t):
             noise_count += 1
     return noise_count / len(tokens)
+
+
+def _compute_bigram_entropy(text: str) -> float:
+    """Shannon entropy over character bigram frequency distribution.
+
+    Responds to structural rearrangement (sentence splitting changes
+    punctuation, capitalization, and whitespace patterns, which changes
+    character bigram frequencies). This is distinct from token-frequency
+    entropy which is preserved by sentence-level restructuring.
+    """
+    if len(text) < 2:
+        return 0.0
+    bigrams = [text[i:i + 2] for i in range(len(text) - 1)]
+    counts = Counter(bigrams)
+    total = len(bigrams)
+    entropy = 0.0
+    for count in counts.values():
+        p = count / total
+        if p > 0:
+            entropy -= p * math.log2(p)
+    return entropy
 
 
 def _compute_impedance(text: str) -> float:
@@ -192,6 +214,7 @@ class SensorySystem(BaseSystem):
                 "periodicity": 0.0,
                 "noise_floor": 0.0,
                 "impedance": 0.0,
+                "bigram_entropy": 0.0,
                 "token_count": 0,
                 "vocabulary_richness": 0.0,
             }
@@ -218,6 +241,7 @@ class SensorySystem(BaseSystem):
             "periodicity": _compute_periodicity(tokens),
             "noise_floor": _compute_noise_floor(tokens),
             "impedance": _compute_impedance(text),
+            "bigram_entropy": _compute_bigram_entropy(text),
             "token_count": len(tokens),
             "vocabulary_richness": len(set(tokens)) / len(tokens) if tokens else 0.0,
         }
@@ -238,20 +262,22 @@ class SensorySystem(BaseSystem):
         return {**state, "signal_report": report}
 
     def _compute_delta(self, features: SignalFeatures, field_state) -> SignalDelta:
-        """Compute delta between measured features and field reference."""
-        # Reference = mean of all limb weights (v1 simplification).
-        limbs = field_state.get("limbs", [])
-        if limbs:
-            reference = sum(limb["weight"] for limb in limbs) / len(limbs)
-        else:
-            reference = 0.5
+        """Compute delta between measured features and per-feature references.
 
-        density_delta = features["density"] - reference
-        entropy_delta = features["entropy"] - reference
-        coherence_delta = features["coherence"] - reference
-        periodicity_delta = features["periodicity"] - reference
-        noise_delta = features["noise_floor"] - reference
-        impedance_delta = features["impedance"] - reference
+        References are derived from the same target profile formulas the motor
+        uses. This means sensory and motor share the same understanding of
+        "expected" for a given field state. The delta is: how far is this
+        feature from what the field expects.
+        """
+        # Per-feature references from shared target profile computation.
+        ref = compute_target_profile(field_state)
+
+        density_delta = features["density"] - ref["density"]
+        entropy_delta = features["entropy"] - ref["entropy"]
+        coherence_delta = features["coherence"] - ref["coherence"]
+        periodicity_delta = features["periodicity"] - ref["periodicity"]
+        noise_delta = features["noise_floor"] - ref["noise_floor"]
+        impedance_delta = features["impedance"] - ref["impedance"]
 
         deltas = [density_delta, entropy_delta, coherence_delta,
                   periodicity_delta, noise_delta, impedance_delta]
@@ -259,6 +285,7 @@ class SensorySystem(BaseSystem):
 
         # Activated limbs: sorted by abs(delta_feature) * limb_weight, descending.
         # Use the max absolute delta across features as the activation signal per limb.
+        limbs = field_state.get("limbs", [])
         max_abs_delta = max(abs(d) for d in deltas) if deltas else 0.0
         activated = []
         for limb in limbs:
@@ -353,7 +380,7 @@ class SensorySystem(BaseSystem):
         if features is None:
             return False
         # Verify all feature values are finite.
-        for key in ("density", "entropy", "coherence", "periodicity", "noise_floor", "impedance"):
+        for key in ("density", "entropy", "coherence", "periodicity", "noise_floor", "impedance", "bigram_entropy"):
             val = features.get(key)
             if val is None or not math.isfinite(val):
                 return False

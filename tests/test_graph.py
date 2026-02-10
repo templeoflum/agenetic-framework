@@ -74,7 +74,7 @@ class TestGraphExecution:
         """Verify routing skips conscious when escalation flag stays False.
 
         Novel inputs always trigger subconscious escalation (aggregate_deviation
-        > 1.5 for any text input vs. field reference of 1.0). So we pre-populate
+        > 1.5 for any uncached text input vs. per-feature references). So we pre-populate
         the signal_pattern_cache with a reflex_response entry matching the input,
         which causes subconscious to vote against escalation.
         """
