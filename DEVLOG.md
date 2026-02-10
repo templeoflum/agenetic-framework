@@ -434,10 +434,70 @@ Field state translated into behavioral parameters:
 
 ---
 
+## 2026-02-10 — Directive 012: Prompt Assembly Refinement
+
+**Tests:** 292 passing (30 new, 262 existing, 2 skipped)
+
+Extracted and extended prompt assembly into a dedicated module. The conscious layer's prompt construction now uses graduated intensity, limb interaction composition, and graduated resting stance — replacing the binary high/low expression from Directive 011.
+
+### Prompt assembly extraction (Part A)
+
+Created `src/agenetic/systems/prompt_assembly.py` — the conscious layer's "what the LLM sees." Moved `LIMB_INSTRUCTIONS` (13 limb entries, unchanged) and prompt construction functions out of `deliberator_anthropic.py`. Any Deliberator implementation can now import the same assembly logic, or override it.
+
+`deliberator_anthropic.py` retains only `_parse_response()` (backend-specific) and the `AnthropicDeliberator` class. External interface unchanged.
+
+### Graduated intensity (Part A)
+
+`compute_intensity(weight)` maps weight distance from 0.5 midpoint to four descriptors:
+- **slightly** — intensity < 0.3 (weight 0.35–0.65)
+- **moderately** — intensity 0.3–0.6 (weight 0.20–0.35 or 0.65–0.80)
+- **strongly** — intensity 0.6–0.85 (weight 0.075–0.20 or 0.80–0.925)
+- **intensely** — intensity ≥ 0.85 (weight 0.0–0.075 or 0.925–1.0)
+
+Descriptors are prepended to instruction text: `"Strongly: When you encounter contradictions..."`. Instruction content unchanged — only framing intensity varies.
+
+### Limb interactions (Part A)
+
+Six compound instructions for limb pairs where the combination produces emergent behavior different from sum of parts:
+
+| Interaction | Condition | Replaces individual? |
+|---|---|---|
+| Tarka + Śraddhā | both_high | No (adds compound alongside individuals) |
+| Nivṛtti + Samatvam | both_high | Yes (compound replaces both) |
+| Prakāśa + Kṣetra-Jñāna | both_high | Yes |
+| Vishvarūpa + Māyāvāda | both_high | Yes |
+| Tarka + Samatvam | Tarka high, Samatvam low | No |
+| Ārēka + Nivṛtti | both_high | Yes |
+
+`replaces_individual` flag prevents redundancy — when True, the compound instruction replaces the individual instructions for those limbs.
+
+### Graduated resting stance (Part A)
+
+Five levels: below threshold (no instruction), slightly elevated, elevated, high, very high. Each with appropriate conciseness instruction. Replaces the binary > 0.6 resting stance instruction from Directive 011.
+
+### Observation harness (Part C)
+
+Six deterministic observation tests in `TestPromptObservations` (test_conscious.py) recording structural prompt differences for the semantic-domain audit (Directive 016):
+- Tarka high vs low prompt diff
+- Interaction vs individual prompt diff
+- Intensity gradient (4 levels, all distinct)
+- Resting stance gradient (5 levels, all distinct)
+- All-limbs-high prompt length (< 3000 chars)
+- All-limbs-low prompt length (< 3000 chars)
+
+One API-optional observation test (`TestPromptObservationsAPI`) records LLM responses for manual review — skipped without credentials.
+
+### Design philosophy
+
+The observation harness is deliberately recording, not asserting. Structural observations (prompt diffs) are deterministic and assertable. Behavioral observations (LLM response diffs) are recorded but not asserted — evaluation is deferred to the conceptual audit (Directive 016). This avoids the circular reasoning identified in the signal-domain audit: "we prompted for X, the LLM mentioned X, therefore X is confirmed."
+
+---
+
 ## What's Next
 
-Conscious layer foundation is in place. Next directives:
+Prompt assembly is in place. Next directives:
 
-- **012 — Prompt assembly refinement** — Semantic limb expression. Field state → behavioral framing for LLM. Most conceptually dense step.
 - **013 — Motor codec refactor** — Pure restructuring. Extract text strategies into TextCodec. Zero behavior change.
 - **014 — Integration** — Motor renders from ConsciousOutput. Subconscious output consumed by conscious. End-to-end escalated path.
+- **015 — Mechanical audit** — DNAgent reads everything, reports raw. Zero code changes.
+- **016 — Conceptual audit** — Fresh planning instance, adversarial posture. Key question: prompt assembly theater or genuine expression?

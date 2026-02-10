@@ -1,4 +1,4 @@
-"""Tests for the conscious system — gate logic, deliberator protocol, integration.
+"""Tests for the conscious system — gate logic, deliberator protocol, integration, observations.
 
 Covers:
 - E1: Gate tests (deterministic, no LLM) — 9 tests
@@ -7,6 +7,7 @@ Covers:
 - E4: Integration tests with MockDeliberator — 7 tests
 - E6: Graph integration test — 1 test
 - E7: Anthropic API test (optional, requires credentials) — 1 test
+- E8: Prompt observation harness — 6 deterministic + 1 API-optional = 7 tests
 """
 
 import os
@@ -17,6 +18,7 @@ from agenetic.field.orientational import OrientationalField
 from agenetic.network.graph import build_graph, create_default_state
 from agenetic.systems.conscious import ConsciousSystem
 from agenetic.systems.deliberator import DeliberationRequest, Deliberator, MockDeliberator
+from agenetic.systems.prompt_assembly import assemble_system_prompt
 from agenetic.systems.immune import ImmuneSystem
 from agenetic.systems.motor import MotorSystem
 from agenetic.systems.sensory import SensorySystem
@@ -565,3 +567,157 @@ class TestAnthropicDeliberator:
         assert "confidence" in output
         assert output["proceed"] is True
         assert "anthropic:" in output["lineage"]["deliberation_model"]
+
+
+# ============================================================
+# E8: Prompt Observation Harness
+# ============================================================
+
+
+def _make_observation_limbs(*limb_specs):
+    """Build active_limbs list from (id, weight) tuples for observation tests."""
+    return [{"id": lid, "name": f"limb_{lid}", "weight": w} for lid, w in limb_specs]
+
+
+def _make_observation_directives(state_awareness="active"):
+    """Minimal expression directives for observation tests."""
+    return {
+        "field_weights": {},
+        "active_limbs": [],
+        "resting_stance": 0.5,
+        "suppress_identity": False,
+        "state_awareness": state_awareness,
+    }
+
+
+class TestPromptObservations:
+    """Observation harness for semantic-domain audit (Directive 016).
+
+    These tests record structural prompt differences under controlled limb
+    configurations. Structural observations are assertable (prompts MUST differ
+    for different inputs). Behavioral observations (how the LLM responds) are
+    deferred to the audit.
+    """
+
+    def test_observe_tarka_high_vs_low_prompt_diff(self):
+        """Tarka at 0.9 vs 0.1 → prompts must differ structurally."""
+        limbs_high = _make_observation_limbs((2, 0.9))
+        limbs_low = _make_observation_limbs((2, 0.1))
+        directives = _make_observation_directives()
+
+        prompt_high = assemble_system_prompt(limbs_high, 0.5, directives)
+        prompt_low = assemble_system_prompt(limbs_low, 0.5, directives)
+
+        assert prompt_high != prompt_low
+        # High prompt should contain Tarka's high instruction.
+        assert "trace them rather than resolving" in prompt_high
+        # Low prompt should contain Tarka's low instruction.
+        assert "Seek resolution and clarity" in prompt_low
+
+    def test_observe_interaction_vs_individual_prompt_diff(self):
+        """Tarka=0.8 + Sraddha=0.8 (interaction) vs Tarka=0.8 + Sraddha=0.5 (no interaction)."""
+        limbs_interaction = _make_observation_limbs((2, 0.8), (5, 0.8))
+        limbs_individual = _make_observation_limbs((2, 0.8), (5, 0.5))
+        directives = _make_observation_directives()
+
+        prompt_interaction = assemble_system_prompt(limbs_interaction, 0.5, directives)
+        prompt_individual = assemble_system_prompt(limbs_individual, 0.5, directives)
+
+        assert prompt_interaction != prompt_individual
+        # Interaction prompt contains compound instruction not in individual.
+        assert "contradictions coexist with genuine ambiguity" in prompt_interaction
+        assert "contradictions coexist with genuine ambiguity" not in prompt_individual
+
+    def test_observe_intensity_gradient(self):
+        """Tarka at 0.62, 0.75, 0.85, 0.95 → four distinct prompts (one per descriptor)."""
+        directives = _make_observation_directives()
+        weights = [0.62, 0.75, 0.85, 0.95]
+        prompts = []
+        for w in weights:
+            limbs = _make_observation_limbs((2, w))
+            prompt = assemble_system_prompt(limbs, 0.5, directives)
+            prompts.append(prompt)
+
+        # All four prompts must be distinct.
+        assert len(set(prompts)) == 4
+
+    def test_observe_resting_stance_gradient(self):
+        """Convergent cluster at 0.55, 0.65, 0.75, 0.85, 0.95 → distinct prompts."""
+        directives = _make_observation_directives()
+        stances = [0.55, 0.65, 0.75, 0.85, 0.95]
+        prompts = []
+        for stance in stances:
+            prompt = assemble_system_prompt([], stance, directives)
+            prompts.append(prompt)
+
+        # At minimum, 0.55 and 0.95 must differ.
+        assert prompts[0] != prompts[-1]
+        # All five should be distinct (different graduated levels).
+        assert len(set(prompts)) == 5
+
+    def test_observe_all_limbs_high_prompt_length(self):
+        """All 13 individually-instructed limbs at 0.9 → prompt under 3000 chars."""
+        instructed_limb_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 16]
+        limbs = _make_observation_limbs(*[(lid, 0.9) for lid in instructed_limb_ids])
+        directives = _make_observation_directives()
+
+        prompt = assemble_system_prompt(limbs, 0.5, directives)
+        assert len(prompt) < 3000
+
+    def test_observe_all_limbs_low_prompt_length(self):
+        """All 13 individually-instructed limbs at 0.1 → prompt under 3000 chars."""
+        instructed_limb_ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 16]
+        limbs = _make_observation_limbs(*[(lid, 0.1) for lid in instructed_limb_ids])
+        directives = _make_observation_directives()
+
+        prompt = assemble_system_prompt(limbs, 0.5, directives)
+        assert len(prompt) < 3000
+
+
+@pytest.mark.skipif(
+    not os.environ.get("ANTHROPIC_API_KEY"),
+    reason="No ANTHROPIC_API_KEY — skipping live API observation",
+)
+class TestPromptObservationsAPI:
+    """API-backed observation. Records LLM responses for different limb weights.
+    Not assertions about behavior — recording infrastructure for audit.
+    """
+
+    def test_observe_api_tarka_high_vs_low(self):
+        from agenetic.systems.deliberator_anthropic import AnthropicDeliberator
+
+        deliberator = AnthropicDeliberator()
+
+        def _make_request(tarka_weight):
+            return DeliberationRequest(
+                input_text="Some truths contradict other truths. What do you do with that?",
+                signal_summary={
+                    "classification": "steady_state",
+                    "aggregate_deviation": 0.8,
+                    "features": {"density": 0.85, "entropy": 4.0, "coherence": 0.6},
+                },
+                threat_summary={"threat_level": "none", "recommended_action": "proceed"},
+                subconscious_summary={"escalation_reason": "novel_input"},
+                field_state={"Tarka": tarka_weight},
+                active_limbs=[{"id": 2, "name": "Tarka", "weight": tarka_weight}],
+                resting_stance=0.5,
+                expression_directives={
+                    "state_awareness": "active",
+                    "suppress_identity": False,
+                },
+            )
+
+        output_high = deliberator.deliberate(_make_request(0.9))
+        output_low = deliberator.deliberate(_make_request(0.1))
+
+        # Record observations — print for manual review, do not assert behavior.
+        print(f"\n=== Tarka HIGH (0.9) ===")
+        print(f"Strategy: {output_high['decision']['strategy']}")
+        print(f"Intent: {output_high['decision']['intent']}")
+        print(f"Constraints: {output_high['decision']['constraints']}")
+        print(f"Confidence: {output_high['confidence']}")
+        print(f"\n=== Tarka LOW (0.1) ===")
+        print(f"Strategy: {output_low['decision']['strategy']}")
+        print(f"Intent: {output_low['decision']['intent']}")
+        print(f"Constraints: {output_low['decision']['constraints']}")
+        print(f"Confidence: {output_low['confidence']}")

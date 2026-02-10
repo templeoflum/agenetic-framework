@@ -1,8 +1,8 @@
 # Current State
 
-**Last updated:** 2026-02-09 (post-Directive 011)
-**Tests:** 262 passing + 1 skipped (was 238, +24 conscious tests)
-**Last directive:** 011 — Conscious Layer Foundation
+**Last updated:** 2026-02-10 (post-Directive 012)
+**Tests:** 292 passing + 2 skipped (was 262, +24 prompt assembly + 6 observation)
+**Last directive:** 012 — Prompt Assembly Refinement
 
 ## System Status
 
@@ -11,7 +11,7 @@
 | Sensory | Implemented (~390 LOC) | 23 (test_systems) + contributions to test_graph, test_round_trip |
 | Immune | Implemented (210 LOC) | 18 (test_systems) + contributions to test_graph |
 | Subconscious | Implemented (186 LOC) | 17 (test_systems) + contributions to test_graph |
-| Conscious | Foundation (~440 LOC + 360 LOC deliberators) | 7 (test_systems) + 24 (test_conscious) + 1 (test_graph) |
+| Conscious | Foundation (~440 LOC + ~100 LOC deliberator + ~380 LOC prompt assembly) | 7 (test_systems) + 30 (test_conscious) + 1 (test_graph) + 24 (test_prompt_assembly) |
 | Motor | Implemented (~620 LOC) | 7 (test_systems) + 58 (test_motor) + 44 (test_round_trip) |
 | Sleep | Stub (pass-through, has WRITE_TOKEN) | 7 (parametrized interface only) |
 | Genetic | Stub (pass-through) | 7 (parametrized interface only) |
@@ -21,40 +21,55 @@
 | File | Tests | Scope |
 |---|---|---|
 | test_systems.py | 94 | Parametrized interface tests (all 7 systems) + system-specific tests |
-| test_conscious.py | 24+1 | Gate logic (9), output structure (3), protocol (3), integration (8), graph (1), API (1 skipped) |
+| test_conscious.py | 30+2 | Gate logic (9), output structure (3), protocol (3), integration (8), graph (1), observations (6), API (2 skipped) |
+| test_prompt_assembly.py | 24 | Intensity (4), individual instructions (4), interactions (6), resting stance (5), full assembly (3), regression (2) |
 | test_motor.py | 58 | Motor unit tests (strategies, determinism, field sensitivity, repair) |
 | test_round_trip.py | 44 | Motor-sensory feedback loop, calibration sweep, multi-input surface |
 | test_graph.py | 18 | LangGraph compilation, routing, signal-domain flow |
 | test_topology.py | 24 | Connection matrix verification |
 
-## Changes in Directive 011
+## Changes in Directive 012
 
-### ConsciousOutput contract (Part A)
-New TypedDicts in base.py: `ResponseDecision`, `ExpressionDirectives`, `Lineage`, `ConsciousOutput`. Added `conscious_output` to `SystemState` and `GraphState`. Extended limb ID constants from 9 to all 18 + `CONVERGENT_CLUSTER_IDS` list.
+### Prompt assembly extraction (Part A)
+Created `prompt_assembly.py` — the conscious layer's "what the LLM sees." Moved `LIMB_INSTRUCTIONS` and prompt construction out of `deliberator_anthropic.py`. Any Deliberator can import and use or override.
 
-### Proceed/suppress gate (Part B)
-Pure Python, no LLM. Priority: immune override → Ārēka suppression (noise) → Nivṛtti pause (low deviation) → resting stance (deep rest + minimal stimulus) → default proceed. Gate produces full evaluation dict. Suppression yields complete ConsciousOutput with proceed=False.
+### Graduated intensity
+`compute_intensity(weight)` → (descriptor, intensity). Four levels: slightly (< 0.3), moderately (0.3–0.6), strongly (0.6–0.85), intensely (≥ 0.85). Descriptors prepended to instruction text.
 
-### Deliberator protocol (Part C)
-`Deliberator` — runtime_checkable Protocol (structural typing). `DeliberationRequest` — structured input. `MockDeliberator` — deterministic, test-friendly. `AnthropicDeliberator` — first real LLM implementation (claude-sonnet-4-20250514), prompt-side limb expression, JSON parsing with fallback.
+### Limb interactions
+Six compound instructions for emergent limb pairs. `replaces_individual` flag controls whether compound replaces or adds to individual instructions. Multiple interactions can fire simultaneously.
 
-### Conscious system integration (Part D)
-`ConsciousSystem.__init__` accepts optional Deliberator. Three code paths: missing signal report (degrade), gate suppresses (no LLM), gate proceeds (call deliberator or degrade if none). Repair checks lineage completeness and confidence. Apoptotic after 3 low-confidence streak.
+### Graduated resting stance
+Five levels: below threshold (no instruction), slightly elevated, elevated, high, very high. Replaces binary > 0.6 from Directive 011.
 
-### Convergent cluster
-Five limbs (Bodhi 12, Rest-as-Realization 14, Mirror 15, Ajāti 17, Asparśa-Yoga 18) treated as composite resting stance: mean of weights. High = recede, Low = project. Testable hypothesis — decompose if conscious produces distinguishable behavior for individual members.
-
-### Expression directives
-Active limbs: weight outside 0.4–0.6. No-Position (13) > 0.6 = suppress_identity. Fourfold State (16): >0.7 reflective, <0.3 still, <0.4 consolidated, else active. Field weights snapshot for all 18 limbs.
+### Observation harness
+Six deterministic observation tests recording structural prompt differences. One API-optional observation test (skipped without credentials). Recording infrastructure for semantic-domain audit (Directive 016).
 
 ## New Files Created
 
 | File | Purpose |
 |---|---|
-| `src/agenetic/systems/deliberator.py` | Deliberator Protocol, DeliberationRequest, MockDeliberator |
-| `src/agenetic/systems/deliberator_anthropic.py` | AnthropicDeliberator (first real LLM backend) |
-| `tests/test_conscious.py` | All conscious system tests (gate, structure, protocol, integration) |
-| `planning/011_conscious_foundation.md` | Planning entry (copy of state.md) |
+| `src/agenetic/systems/prompt_assembly.py` | Extracted/extended prompt logic (LIMB_INSTRUCTIONS, LIMB_INTERACTIONS, intensity, assembly) |
+| `tests/test_prompt_assembly.py` | 24 deterministic prompt structure tests |
+| `planning/012_prompt_assembly.md` | Planning entry (copy of state.md) |
+
+## Prompt Assembly Architecture
+
+### LIMB_INSTRUCTIONS (13 entries, unchanged from D011)
+Limbs 1–11, 13, 16. Each with name, high instruction, low instruction.
+
+### LIMB_INTERACTIONS (6 entries)
+| Pair | Condition | Replaces? |
+|---|---|---|
+| Tarka + Śraddhā | both_high | No |
+| Nivṛtti + Samatvam | both_high | Yes |
+| Prakāśa + Kṣetra-Jñāna | both_high | Yes |
+| Vishvarūpa + Māyāvāda | both_high | Yes |
+| Tarka + Samatvam | high_low | No |
+| Ārēka + Nivṛtti | both_high | Yes |
+
+### Assembly pipeline
+`build_limb_instructions(active_limbs)` → check interactions → generate graduated individuals → return interactions + individuals. `assemble_system_prompt()` → role + behavioral orientation + resting stance + state awareness + output format.
 
 ## Orientational Field
 
@@ -77,6 +92,7 @@ All 18 Asparśa limbs at 0.5 midpoint. Per-feature reference formulas unchanged 
 - Connection matrix: 17 primary (weight 1.0) + 6 secondary (weight 0.5), 3 absent connections enforced
 - Shared target profile in base.py (sensory + motor import same function)
 - Deliberator protocol: structural typing, swappable backends (Mock, Anthropic API)
+- Prompt assembly: extracted module, graduated intensity, limb interactions, observation harness
 
 ## Active Blockers
 
@@ -84,6 +100,7 @@ All 18 Asparśa limbs at 0.5 midpoint. Per-feature reference formulas unchanged 
 
 ## Next Directive Candidates
 
-- **012 — Prompt assembly refinement** — Semantic limb expression. Field state → behavioral framing for LLM. Most conceptually dense step.
 - **013 — Motor codec refactor** — Pure restructuring. Extract text strategies into TextCodec. Zero behavior change.
 - **014 — Integration** — Motor renders from ConsciousOutput. Subconscious output consumed by conscious. End-to-end escalated path.
+- **015 — Mechanical audit** — DNAgent reads everything, reports raw. Zero code changes.
+- **016 — Conceptual audit** — Fresh planning instance, adversarial posture. Key question: prompt assembly theater or genuine expression?
