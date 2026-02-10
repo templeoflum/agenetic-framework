@@ -493,11 +493,52 @@ The observation harness is deliberately recording, not asserting. Structural obs
 
 ---
 
+## 2026-02-10 — Directive 013: Motor Codec Refactor
+
+**Tests:** 304 passing (12 new, 292 existing, 2 skipped)
+
+Pure refactor: extracted motor's ~450 LOC of text restructuring logic into a TextCodec class behind a Codec protocol. Zero behavior change — all existing tests pass unchanged. Architectural preparation for Directive 014 (ConsciousOutput consumption).
+
+### Codec protocol (Part A)
+
+Created `src/agenetic/systems/codec.py` with:
+- `Codec` — `runtime_checkable Protocol` (mirrors Deliberator pattern). Three members: `name` property, `encode()` method, `quality_check()` method.
+- `CodecResult` TypedDict — output, strategies_applied, transform_magnitude.
+
+### TextCodec (Part B)
+
+Created `src/agenetic/systems/text_codec.py`:
+- Moved all 6 modulation functions (`_modulate_density`, `_modulate_entropy`, `_modulate_coherence`, `_modulate_impedance`, `_modulate_periodicity`, `_modulate_noise_floor`) — unchanged implementation.
+- Moved `_compute_transform_magnitude()` and `_blend_toward_original()`.
+- `TextCodec.encode()` contains the full strategy pipeline: Areka suppression gate → Svadharma/Ksetra-Jnana scaling → 6 feature modulations → Mayavada cap.
+- `TextCodec.quality_check()` contains the old `_check_output_quality()` logic.
+
+### Motor refactored (Part B)
+
+`motor.py` reduced from ~620 LOC to ~165 LOC. MotorSystem is now an orchestrator:
+- Reads field state, computes target profile
+- Delegates to `self._codec.encode()` for text transformation
+- Delegates to `self._codec.quality_check()` for repair verification
+- Handles Areka suppression early return (empty output is valid, skip quality check)
+- Retains: `_to_str()`, empty-input handling, repair failure tracking, apoptotic condition
+
+Moved functions are re-exported from motor.py via import for backward compatibility — existing test imports work unchanged.
+
+### Tests (Part C)
+
+12 new tests in `test_codec.py`:
+- **Protocol (3):** TextCodec satisfies Codec protocol, name is "text", encode returns CodecResult
+- **Equivalence (4):** density modulation, entropy modulation, Areka suppression, Mayavada cap boundary behavior
+- **Quality check (2):** normal pair passes, empty output fails
+- **Motor delegation (3):** motor uses TextCodec, process output unchanged, repair delegates to codec
+
+---
+
 ## What's Next
 
-Prompt assembly is in place. Next directives:
+Codec architecture is in place. Next directives:
 
-- **013 — Motor codec refactor** — Pure restructuring. Extract text strategies into TextCodec. Zero behavior change.
 - **014 — Integration** — Motor renders from ConsciousOutput. Subconscious output consumed by conscious. End-to-end escalated path.
 - **015 — Mechanical audit** — DNAgent reads everything, reports raw. Zero code changes.
 - **016 — Conceptual audit** — Fresh planning instance, adversarial posture. Key question: prompt assembly theater or genuine expression?
+- **017 — Remediation.**

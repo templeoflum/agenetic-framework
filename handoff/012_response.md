@@ -134,7 +134,7 @@ Added `TestPromptObservationsAPI` class with 1 API-optional test (skipped withou
 - [x] `planning/CURRENT.md` rebuilt from actual repo inspection
 - [x] DEVLOG.md entry added
 - [x] README.md updated
-- [ ] Git commit and push completed
+- [x] Git commit and push completed (e0975b6)
 
 ## Files Changed
 
