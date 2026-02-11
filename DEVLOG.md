@@ -601,8 +601,36 @@ dormant gate and convergent cluster (need sleep implementation).
 
 ---
 
+## 2026-02-11 — Directive 017: Sleep System Implementation
+
+**Commit:** `60fce51`
+**Tests:** 371 passing + 2 skipped (35 new)
+
+Implemented sleep as the first meta-domain system. Sleep fires every 10 cycles
+(configurable) and performs three consolidation operations:
+
+1. Subconscious cache pruning — deeper than inline pruning (catches 2-encounter
+   stale patterns), preventing monotonic cache growth toward the 10K apoptotic limit.
+2. Immune threat log consolidation — promotes confirmed recurring threats,
+   demotes stale unconfirmed threats, removes expired entries. Uses datetime-based
+   staleness (1hr default) matching immune's ISO timestamp format.
+3. Orientational field weight modification — derives adjustment signals from
+   consolidation observations (noise ratio, threat pressure, novelty rate)
+   and applies bounded weight deltas (±0.05 max per tick) with gravitational
+   decay toward the 0.5 default. Uses state["field"]["limbs"] direct modification
+   (OrientationalField object is not accessible from SystemState).
+
+The convergent cluster (Bodhi, Nivrtti-Rest, Mirror, Ajāti, Asparśa-Yoga)
+moves as a coordinated group, enabling the resting stance composite to eventually
+cross gate thresholds.
+
+Unblocks: dormant gate (audit finding #2), convergent cluster (finding #3),
+static field (recommendation #8). Mitigates: cache growth (finding #4).
+
+---
+
 ## What's Next
 
-Audit remediation complete. Next directives:
+Sleep operational. Next directives:
 
-- **017 — Sleep implementation** — First meta-domain system. Unblocks dormant gate + convergent cluster findings.
+- Genetic implementation or feedback loop wiring (motor→conscious, conscious→sensory, conscious→immune).

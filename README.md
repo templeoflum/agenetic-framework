@@ -19,7 +19,7 @@ This framework applies that insight to agent architecture. Rather than a monolit
 | **Subconscious** | Associates — correlates signal patterns | Signal | Every cycle |
 | **Conscious** | Deliberates — constructs meaning | Semantic | On escalation |
 | **Motor** | Expresses — encodes output for medium | Meta | On demand |
-| **Sleep** | Consolidates — optimizes transfer functions | Meta | Periodic |
+| **Sleep** | Consolidates — pruning, weight modification | Meta | Periodic |
 | **Genetic** | Generates — the minimal seed | Meta | Read-only |
 
 ### The Signal-Semantics Boundary
@@ -51,9 +51,10 @@ The signal-domain tier and motor layer are implemented and operational:
 - Orientational field with all 18 Asparśa limbs, sleep-only write access enforced
 - Conscious layer with proceed/suppress gate, Deliberator protocol, Anthropic API integration, and graduated prompt assembly (intensity scaling, limb interactions, resting stance graduation)
 - End-to-end integration: conscious suppression propagates to motor (empty output), conscious strategy recorded as motor metadata, reflex path bypasses conscious entirely
-- 320 tests passing
+- Sleep system operational — consolidation (cache pruning, immune log consolidation) and orientational field weight modification
+- 371 tests passing
 
-Sleep and genetic remain stubs awaiting implementation.
+Genetic remains a stub awaiting implementation.
 
 ## Architecture
 
@@ -101,7 +102,7 @@ All coordination happens through files in `handoff/`. Every directive is a cold 
 - Python 3.11+
 - LangGraph for orchestration
 - Anthropic API for LLM calls (conscious layer deliberation)
-- pytest (320 tests)
+- pytest (371 tests)
 
 ## License
 
