@@ -647,12 +647,29 @@ Also established phase-tracking infrastructure to prevent the navigational drift
 
 ---
 
+## 2026-02-11 — Directive 019: Feedback Loops + Topology Consultation
+
+**Commit:** `be9c7d4`
+**Tests:** 405 passing + 2 skipped (16 new)
+
+**Phase items closed:** Three feedback loops (Motor→Conscious, Conscious→Sensory, Conscious→Immune), partial topology weight consultation.
+
+Wired three secondary connections from the architecture into the LangGraph routing, transforming the processing pipeline into a network with bounded cycles:
+
+- **Motor→Conscious** (retry): when motor's repair check fails, routes back to conscious for re-deliberation, then motor retries. Max 1 retry per invocation. Bounded by feedback counter.
+- **Conscious→Sensory** (re-examination): conscious can request the signal domain re-analyze the input. Routes back to sensory, re-runs immune and subconscious, then conscious decides again. Max 1 re-examination. Currently dormant (MockDeliberator never requests it).
+- **Conscious→Immune** (threshold adjustment): conscious writes threshold deltas to state; immune reads them and adjusts innate detection thresholds. Takes effect on re-examination loops or next invocation.
+
+All three secondary connections are gated by topology.py weights — setting weight to 0.0 disables the feedback path. Introduced FeedbackSignals TypedDict for cross-system coordination and passthrough gate nodes as the LangGraph pattern for state mutation at routing boundaries.
+
+---
+
 ## What's Next
 
-Phases 1 and 2 complete. Phase 3 (Network Topology + Self-Regulation):
+Phase 3 (Network Topology + Self-Regulation) in progress:
 
-- Feedback loops: Motor→Conscious, Conscious→Sensory, Conscious→Immune
-- Graph uses topology connection weights
+- ~~Feedback loops: Motor→Conscious, Conscious→Sensory, Conscious→Immune~~ ✓
+- ~~Graph uses topology connection weights (partial)~~ ✓
 - Homeostatic monitoring
 - Connection weight modification during sleep
 - System/agent-level apoptosis

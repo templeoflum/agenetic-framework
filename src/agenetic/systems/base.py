@@ -186,6 +186,7 @@ class ConsciousOutput(TypedDict):
     lineage: Lineage
     proceed: bool  # Gate result: True = respond, False = suppress (sacred pause)
     confidence: float  # 0.0–1.0, deliberation confidence
+    re_examine: bool  # Requests sensory re-examination (default False)
 
 
 class ExpressionEntry(TypedDict):
@@ -215,6 +216,17 @@ class GeneticOutput(TypedDict):
     seed_integrity: bool  # True if drift < apoptotic threshold
 
 
+class FeedbackSignals(TypedDict):
+    """Coordination state for feedback loops between systems.
+
+    Tracks retry/re-examination counts (to enforce max iterations)
+    and carries threshold adjustments from conscious to immune.
+    """
+    motor_retry_count: int  # times motor has retried via conscious (max 1)
+    re_examine_count: int  # times conscious requested re-examination (max 1)
+    immune_threshold_adjustments: dict[str, float]  # threshold_name -> delta
+
+
 class SystemState(TypedDict):
     """The shared state object passed between all systems in the network.
 
@@ -234,6 +246,7 @@ class SystemState(TypedDict):
     conscious_output: ConsciousOutput | None
     motor_output: MotorOutput | None
     genetic_output: GeneticOutput | None
+    feedback: FeedbackSignals | None
 
 
 class BaseSystem(ABC):

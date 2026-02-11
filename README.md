@@ -36,7 +36,7 @@ The field's limb weights are transfer function coefficients that default to 0.5 
 
 ## Current Status
 
-**Phase 1 — Single Cell: COMPLETE** | **Phase 2 — Temporal Stratification: COMPLETE**
+**Phase 1 — Single Cell: COMPLETE** | **Phase 2 — Temporal Stratification: COMPLETE** | **Phase 3 — Network Topology: In Progress**
 
 All seven systems implemented and operational:
 
@@ -45,9 +45,10 @@ All seven systems implemented and operational:
 - Motor system with Codec architecture: TextCodec restructures text toward target signal profiles (10 strategies)
 - Sleep system: consolidation (cache pruning, immune log consolidation), orientational field weight modification
 - Genetic system: expression profile store, factory seed ownership, drift measurement
-- LangGraph orchestration with conditional routing: three verified paths (reflex, escalated, suppression)
+- LangGraph orchestration with feedback loops: three routing paths (reflex, escalated, suppression) + two feedback cycles (motor retry, conscious re-examination)
+- Topology weight consultation: secondary connections gated by topology.py weights
 - Orientational field with 18 Asparśa limbs — now dynamic (sleep modifies weights)
-- 389 tests passing
+- 405 tests passing
 
 ## Architecture
 
@@ -96,7 +97,7 @@ All coordination happens through files in `handoff/`. Every directive is a cold 
 - Python 3.11+
 - LangGraph for orchestration
 - Anthropic API for LLM calls (conscious layer deliberation)
-- pytest (389 tests)
+- pytest (405 tests)
 
 ## License
 

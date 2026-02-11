@@ -104,4 +104,5 @@ class MockDeliberator:
             },
             "proceed": True,
             "confidence": 0.8,
+            "re_examine": False,
         }

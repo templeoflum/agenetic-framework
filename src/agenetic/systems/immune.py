@@ -82,21 +82,33 @@ class ImmuneSystem(BaseSystem):
         delta = report["delta"]
         anomaly_scores: dict[str, float] = {}
 
-        # --- Innate immunity: fixed threshold checks ---
-        if features["entropy"] > 6.0:
-            anomaly_scores["entropy"] = features["entropy"] - 6.0
+        # Read threshold adjustments from conscious feedback (if present).
+        feedback = state.get("feedback") or {}
+        adjustments = feedback.get("immune_threshold_adjustments", {})
 
-        if features["noise_floor"] > 0.35:
-            anomaly_scores["noise_floor"] = features["noise_floor"] - 0.35
+        # Apply adjustments to innate thresholds for this invocation.
+        entropy_threshold = 6.0 + adjustments.get("entropy_threshold", 0.0)
+        noise_floor_threshold = 0.35 + adjustments.get("noise_floor_threshold", 0.0)
+        impedance_threshold = 0.5 + adjustments.get("impedance_threshold", 0.0)
+        deviation_threshold = 3.0 + adjustments.get("deviation_threshold", 0.0)
+        vocabulary_threshold = 0.1 + adjustments.get("vocabulary_threshold", 0.0)
+        adaptive_threshold = self.ADAPTIVE_MATCH_THRESHOLD + adjustments.get("adaptive_match_threshold", 0.0)
 
-        if features["impedance"] > 0.5:
-            anomaly_scores["impedance"] = features["impedance"] - 0.5
+        # --- Innate immunity: threshold checks ---
+        if features["entropy"] > entropy_threshold:
+            anomaly_scores["entropy"] = features["entropy"] - entropy_threshold
 
-        if delta["aggregate_deviation"] > 3.0:
-            anomaly_scores["aggregate_deviation"] = delta["aggregate_deviation"] - 3.0
+        if features["noise_floor"] > noise_floor_threshold:
+            anomaly_scores["noise_floor"] = features["noise_floor"] - noise_floor_threshold
 
-        if features["vocabulary_richness"] < 0.1:
-            anomaly_scores["vocabulary_richness"] = 0.1 - features["vocabulary_richness"]
+        if features["impedance"] > impedance_threshold:
+            anomaly_scores["impedance"] = features["impedance"] - impedance_threshold
+
+        if delta["aggregate_deviation"] > deviation_threshold:
+            anomaly_scores["aggregate_deviation"] = delta["aggregate_deviation"] - deviation_threshold
+
+        if features["vocabulary_richness"] < vocabulary_threshold:
+            anomaly_scores["vocabulary_richness"] = vocabulary_threshold - features["vocabulary_richness"]
 
         # --- Adaptive immunity: threat log pattern matching ---
         current_vector = _feature_vector(features)
@@ -109,7 +121,7 @@ class ImmuneSystem(BaseSystem):
                 logged_vector = json.loads(entry["pattern"])
                 if isinstance(logged_vector, list) and len(logged_vector) == 6:
                     dist = _euclidean_distance(current_vector, logged_vector)
-                    if dist < self.ADAPTIVE_MATCH_THRESHOLD:
+                    if dist < adaptive_threshold:
                         matched_patterns.append(entry["pattern"])
                         # Update encounter count and timestamp.
                         immune_log[i] = {

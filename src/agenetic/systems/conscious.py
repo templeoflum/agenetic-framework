@@ -134,6 +134,10 @@ class ConsciousSystem(BaseSystem):
         # Patch lineage with gate evaluation (deliberator doesn't have it).
         conscious_output["lineage"]["gate_evaluation"] = gate_eval
 
+        # Ensure re_examine is present (deliberator may not set it).
+        if "re_examine" not in conscious_output:
+            conscious_output["re_examine"] = False
+
         # Track low-confidence streak for apoptotic condition.
         metadata = dict(state["metadata"])
         if conscious_output["confidence"] < 0.2:
@@ -404,6 +408,7 @@ class ConsciousSystem(BaseSystem):
             },
             "proceed": False,
             "confidence": 1.0,
+            "re_examine": False,
         }
 
     def _build_degraded_output(
@@ -439,4 +444,5 @@ class ConsciousSystem(BaseSystem):
             },
             "proceed": True,
             "confidence": 0.0,
+            "re_examine": False,
         }
