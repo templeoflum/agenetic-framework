@@ -464,9 +464,27 @@ The planning documents (Directives 007, 008) carry honest caveats about this. Th
 
 ## Status
 
-Phase 1 (Minimal Viable Cell) is partially implemented. The signal-domain tier (sensory, immune, subconscious) and motor layer are operational. Conscious, sleep, and genetic remain stubs. The orientational field is implemented with sleep-only write access. Apoptotic conditions are implemented on all systems. The connection matrix is declarative (weights not yet used by graph routing).
+### Phase Completion
 
-v1 → v2 changes: network topology replaces loop, temporal stratification added, inline repair added, homeostatic regulation added, apoptotic exit conditions added, immune system upgraded to adaptive, implementation pathway phased for incremental building.
+**Phase 1 — Single Cell: COMPLETE (D001–D018)**
+All seven systems implemented with typed interfaces. LangGraph routing with conditional escalation. Three verified routing paths (reflex, escalated, suppression). Orientational field with sleep-only write access enforced. Signal-semantics boundary established. Genetic provides expression profiles; sleep modifies field weights. 389+ tests passing.
+
+**Phase 2 — Temporal Stratification: COMPLETE (D011–D017)**
+Conscious fires on escalation only (D014). Reflex paths bypass conscious (D014). Sleep fires periodically at configurable interval (D017). Motor fires on demand. Different tick rates operational across all seven systems.
+
+**Phase 3 — Network Topology + Self-Regulation: NOT STARTED**
+Remaining work: feedback loops (Motor→Conscious, Conscious→Sensory, Conscious→Immune), connection weight routing in graph, homeostatic monitoring, connection weight modification during sleep, system/agent-level apoptosis.
+
+**Phase 4 — Epigenetic Adaptation: NOT STARTED**
+Remaining work: sleep writes to genetic expression profiles, expression profiles modify system behavior, field expression adjusts from accumulated experience, multi-cycle validation.
+
+### Phase Boundary Note
+
+Phases 1 and 2 were not completed sequentially. Development followed audit-driven remediation (D010, D016) that addressed findings by severity rather than by phase, pulling Phase 2 and Phase 3 work into Phase 1 completion. See `docs/AUDIT_METHODOLOGY.md` for the corrective methodology adopted post-D018. See `planning/018_phase_consolidation.md` for the full post-mortem.
+
+### Implementation Note
+
+v1 → v2 changes: network topology replaces loop, temporal stratification added, inline repair added, homeostatic regulation specified (not yet implemented), apoptotic exit conditions added (process-level implemented, system/agent level pending), immune system upgraded to adaptive, implementation pathway phased for incremental building.
 
 ---
 

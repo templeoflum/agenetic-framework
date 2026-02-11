@@ -188,6 +188,33 @@ class ConsciousOutput(TypedDict):
     confidence: float  # 0.0–1.0, deliberation confidence
 
 
+class ExpressionEntry(TypedDict):
+    """A single system's expression state within the genetic profile."""
+
+    system_name: str
+    state: str  # "active" | "dormant" | "suppressed"
+
+
+class ExpressionProfile(TypedDict):
+    """The genetic expression profile — what capabilities are currently expressed.
+
+    The factory seed (default_weights, generation 0) is immutable.
+    Sleep modifies the expression profile through epigenetic feedback (Phase 4).
+    """
+
+    default_weights: dict[str, float]  # limb_name -> factory default weight
+    system_expressions: list[ExpressionEntry]
+    generation: int  # modification count (0 = factory, incremented by sleep in Phase 4)
+
+
+class GeneticOutput(TypedDict):
+    """Output of the genetic system — a snapshot of the current expression state."""
+
+    expression_profile: ExpressionProfile
+    drift_from_seed: float  # sum of |current_weight - default_weight| across all limbs
+    seed_integrity: bool  # True if drift < apoptotic threshold
+
+
 class SystemState(TypedDict):
     """The shared state object passed between all systems in the network.
 
@@ -206,6 +233,7 @@ class SystemState(TypedDict):
     signal_pattern_cache: list[CachedSignalPattern]
     conscious_output: ConsciousOutput | None
     motor_output: MotorOutput | None
+    genetic_output: GeneticOutput | None
 
 
 class BaseSystem(ABC):

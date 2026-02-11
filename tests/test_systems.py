@@ -75,6 +75,7 @@ def _make_sample_state(input_data="test input") -> SystemState:
         "repair_passed": True,
         "transform_magnitude": 0.0,
     }
+    state["genetic_output"] = None
     return state
 
 

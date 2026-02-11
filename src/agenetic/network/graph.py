@@ -38,6 +38,7 @@ class GraphState(TypedDict):
     signal_pattern_cache: list
     conscious_output: Any  # ConsciousOutput | None
     motor_output: Any  # MotorOutput | None
+    genetic_output: Any  # GeneticOutput | None
 
 
 def create_default_state(
@@ -73,6 +74,7 @@ def create_default_state(
         "signal_pattern_cache": [],
         "conscious_output": None,
         "motor_output": None,
+        "genetic_output": None,
     }
 
 
@@ -103,6 +105,7 @@ def _make_node(system: BaseSystem):
             "signal_pattern_cache": state.get("signal_pattern_cache", []),
             "conscious_output": state.get("conscious_output"),
             "motor_output": state.get("motor_output"),
+            "genetic_output": state.get("genetic_output"),
         }
 
         # Process.

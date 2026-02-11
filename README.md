@@ -36,25 +36,18 @@ The field's limb weights are transfer function coefficients that default to 0.5 
 
 ## Current Status
 
-**Phase 1 — Minimal Viable Cell** (in progress)
+**Phase 1 — Single Cell: COMPLETE** | **Phase 2 — Temporal Stratification: COMPLETE**
 
-The signal-domain tier and motor layer are implemented and operational:
+All seven systems implemented and operational:
 
-- Seven system interfaces defined with typed state passing
-- Sensory system extracts six signal features from input, classifies signal type, computes delta from orientational field reference
-- Immune system performs innate threshold detection and adaptive pattern matching on signal reports
-- Subconscious system correlates signal patterns against cache, makes escalation decisions
-- Motor system with Codec architecture: TextCodec restructures text toward target signal profiles (10 strategies: 6 feature modulators + Śraddhā noise floor, Māyāvāda cap, Ārēka suppression, Svadharma/Kṣetra-Jñāna meta-strategies). MotorSystem orchestrates, TextCodec transforms.
-- Round-trip calibration infrastructure: motor output → sensory → measure feature deltas, with parameterized limb weight variation for testing limb-to-feature mapping hypotheses
-- Weighted connection matrix defines all system-to-system communication paths
-- LangGraph orchestration with conditional routing: subconscious drives escalation, three verified paths (reflex, escalated, suppression)
-- Orientational field with all 18 Asparśa limbs, sleep-only write access enforced
-- Conscious layer with proceed/suppress gate, Deliberator protocol, Anthropic API integration, and graduated prompt assembly (intensity scaling, limb interactions, resting stance graduation)
-- End-to-end integration: conscious suppression propagates to motor (empty output), conscious strategy recorded as motor metadata, reflex path bypasses conscious entirely
-- Sleep system operational — consolidation (cache pruning, immune log consolidation) and orientational field weight modification
-- 371 tests passing
-
-Genetic remains a stub awaiting implementation.
+- Signal-domain tier (sensory, immune, subconscious): feature extraction, anomaly detection, pattern correlation, escalation routing
+- Conscious layer: proceed/suppress gate, Deliberator protocol, Anthropic API integration, graduated prompt assembly
+- Motor system with Codec architecture: TextCodec restructures text toward target signal profiles (10 strategies)
+- Sleep system: consolidation (cache pruning, immune log consolidation), orientational field weight modification
+- Genetic system: expression profile store, factory seed ownership, drift measurement
+- LangGraph orchestration with conditional routing: three verified paths (reflex, escalated, suppression)
+- Orientational field with 18 Asparśa limbs — now dynamic (sleep modifies weights)
+- 389 tests passing
 
 ## Architecture
 
@@ -76,6 +69,7 @@ agenetic-framework/
 ├── docs/
 │   ├── ARCHITECTURE.md              # Full v2 framework specification
 │   ├── DIRECTIVES.md                # How the directive system works
+│   ├── AUDIT_METHODOLOGY.md        # Phase-first audit methodology
 │   ├── architecture_amendment.md    # Signal-semantics boundary
 │   └── signal_report_structure.md   # Signal report TypedDict spec
 ├── handoff/                         # Directive/response exchange files
@@ -102,7 +96,7 @@ All coordination happens through files in `handoff/`. Every directive is a cold 
 - Python 3.11+
 - LangGraph for orchestration
 - Anthropic API for LLM calls (conscious layer deliberation)
-- pytest (371 tests)
+- pytest (389 tests)
 
 ## License
 

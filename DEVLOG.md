@@ -629,8 +629,30 @@ static field (recommendation #8). Mitigates: cache growth (finding #4).
 
 ---
 
+## 2026-02-11 — Directive 018: Phase Consolidation — Genetic + Structural Reckoning
+
+**Commit:** `1e9cc00`
+**Tests:** 389 passing + 2 skipped (18 new)
+
+**Phase closed:** Phase 1 (Single Cell) — all seven systems now implemented.
+
+Implemented the genetic system as an expression profile store — the seventh and final system. Genetic does not fire actively; it provides readable expression profiles (factory seed weights, system expression states, generation counter) and measures drift of current field weights from the factory baseline. Apoptotic condition triggers when aggregate drift exceeds 3.0.
+
+Also established phase-tracking infrastructure to prevent the navigational drift that caused development to chaotically implement parts of Phases 1–3 over 17 directives without completing any phase. Key deliverables:
+
+- `docs/AUDIT_METHODOLOGY.md` — audit findings must now be classified by phase before severity ranking, and remediation directives must stay within one phase unless a finding is a deployment hazard
+- Phase tracking section added to `planning/CURRENT.md` — every directive now documents which phase items it closes
+- `docs/ARCHITECTURE.md` status section updated to reflect actual completion state (was stale since D011)
+- Full post-mortem on phase drift in `planning/018_phase_consolidation.md`
+
+---
+
 ## What's Next
 
-Sleep operational. Next directives:
+Phases 1 and 2 complete. Phase 3 (Network Topology + Self-Regulation):
 
-- Genetic implementation or feedback loop wiring (motor→conscious, conscious→sensory, conscious→immune).
+- Feedback loops: Motor→Conscious, Conscious→Sensory, Conscious→Immune
+- Graph uses topology connection weights
+- Homeostatic monitoring
+- Connection weight modification during sleep
+- System/agent-level apoptosis
