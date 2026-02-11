@@ -461,14 +461,14 @@ class TestSubconsciousSystem:
         result2 = sub.process(result1)
         assert len(result2["subconscious_output"]["matched_pattern_ids"]) > 0
 
-    def test_escalation_flag_explicitly_reset(self):
+    def test_preserves_upstream_escalation_flag(self):
         sub = SubconsciousSystem()
         state = self._make_signal_state(aggregate_deviation=0.5)
-        # Immune previously set escalation, but subconscious overrides.
+        # Upstream (immune) set escalation flag.
         state["flags"]["escalate_to_conscious"] = True
         result = sub.process(state)
-        # Subconscious explicitly resets flag when it doesn't recommend escalation.
-        assert result["flags"]["escalate_to_conscious"] is False
+        # OR-preservation: upstream True survives even when subconscious doesn't escalate.
+        assert result["flags"]["escalate_to_conscious"] is True
 
     def test_cache_grows_per_call(self):
         sub = SubconsciousSystem()

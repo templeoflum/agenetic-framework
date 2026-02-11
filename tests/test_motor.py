@@ -419,8 +419,8 @@ class TestMayavadaCap:
         # Should still work, strategies fire normally.
         assert result["motor_output"]["repair_passed"] is True
 
-    def test_mayavada_near_one_constrains_heavily(self):
-        """Māyāvāda at 0.9 (< 0.95) means max_allowed = 0.1 (tight constraint)."""
+    def test_mayavada_high_humility_constrains_heavily(self):
+        """Māyāvāda at 0.9 (> 0.55) means max_allowed = 0.1 (tight constraint)."""
         motor = MotorSystem()
         field = _vary_single_limb(MAYAVADA_ID, 0.9)
         state = _make_motor_state(input_text=MULTI_SENTENCE_TEXT, field=field)
@@ -430,18 +430,16 @@ class TestMayavadaCap:
         assert output["transform_magnitude"] <= 0.15  # allow small margin
         assert output["repair_passed"] is True
 
-    def test_mayavada_at_one_no_constraint(self):
-        """Māyāvāda at 1.0 (≥ 0.95) means cap is inactive."""
+    def test_mayavada_at_one_max_constraint(self):
+        """Māyāvāda at 1.0 (max humility, > 0.55) → cap forces output = input."""
         motor = MotorSystem()
-        field_constrained = _vary_single_limb(MAYAVADA_ID, 0.5)
-        field_unconstrained = _vary_single_limb(MAYAVADA_ID, 1.0)
-        state_c = _make_motor_state(input_text=MULTI_SENTENCE_TEXT, field=field_constrained)
-        state_u = _make_motor_state(input_text=MULTI_SENTENCE_TEXT, field=field_unconstrained)
-        result_c = motor.process(state_c)
-        result_u = motor.process(state_u)
-        # Constrained should have "mayavada_cap" in strategies if transform was large.
-        # Unconstrained should not.
-        assert "mayavada_cap" not in result_u["motor_output"]["strategies_applied"]
+        field = _vary_single_limb(MAYAVADA_ID, 1.0)
+        state = _make_motor_state(input_text=MULTI_SENTENCE_TEXT, field=field)
+        result = motor.process(state)
+        output = result["motor_output"]
+        # At weight 1.0: max_allowed = 0.0 → output forced to match input.
+        assert output["transform_magnitude"] == 0.0
+        assert "mayavada_cap" in output["strategies_applied"]
 
     def test_transform_magnitude_reported(self):
         """Motor output should include transform_magnitude field."""

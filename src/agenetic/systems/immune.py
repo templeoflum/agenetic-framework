@@ -168,6 +168,8 @@ class ImmuneSystem(BaseSystem):
             flags["degraded"] = degraded
         if action == "reject":
             flags["apoptotic"] = True
+        if threat_level == "critical":
+            flags["escalate_to_conscious"] = True
 
         # --- Add new anomalous pattern to immune_log ---
         if threat_level in ("medium", "high", "critical") and not matched_patterns:

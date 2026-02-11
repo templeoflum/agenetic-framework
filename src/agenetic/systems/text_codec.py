@@ -398,7 +398,10 @@ class TextCodec:
         """Apply text restructuring strategies toward target profile."""
         text = input_data
 
-        # --- Areka suppression gate ---
+        # --- Ārēka suppression gate ---
+        # Ārēka defense-in-depth: codec threshold (0.3) is lower than conscious gate (0.7)
+        # because this is the final output gate — more cautious by design.
+        # See also: conscious.py Ārēka gate path.
         areka_w = _get_limb_weight(field_state, AREKA_ID)
         if areka_w > 0.3:
             input_noise = current_features["noise_floor"]
@@ -488,7 +491,7 @@ class TextCodec:
         mayavada_w = _get_limb_weight(field_state, MAYAVADA_ID)
         transform_magnitude = _compute_transform_magnitude(text, output)
 
-        if mayavada_w < 0.45:
+        if mayavada_w > 0.55:
             max_allowed = 1.0 - mayavada_w
             if transform_magnitude > max_allowed and max_allowed > 0.0:
                 output = _blend_toward_original(text, output, max_allowed, transform_magnitude)

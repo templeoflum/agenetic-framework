@@ -456,6 +456,10 @@ The conscious layer is free to interpret limb meanings differently at the semant
 
 The planning documents (Directives 007, 008) carry honest caveats about this. The code should not be treated as canonizing what the planning documents describe as preliminary.
 
+## Threshold Design Notes
+
+**Ārēka Defense-in-Depth:** Ārēka operates at two thresholds — 0.3 in the text codec (output suppression, outer gate) and 0.7 in the conscious gate (deliberation suppression, inner gate). The lower codec threshold reflects its position as the final output gate: more cautious because it's the last chance to suppress. The higher conscious threshold reflects that suppressing an LLM call is a more consequential action. Both require additional conditions beyond the weight threshold (noise level, entropy).
+
 ---
 
 ## Status

@@ -193,11 +193,15 @@ class ConsciousSystem(BaseSystem):
         """Evaluate the proceed/suppress gate. Pure Python, no LLM.
 
         Priority order (first match wins):
-        1. Immune override → always proceed
-        2. Areka suppression → high weight + noise classification
-        3. Nivrtti pause → high weight + low deviation
-        4. Resting stance → very high composite + very low deviation
-        5. Default → proceed
+        1. Areka suppression → high weight + noise classification
+        2. Nivrtti pause → high weight + low deviation
+        3. Resting stance → very high composite + very low deviation
+        4. Default → proceed
+
+        Note: Immune escalation is handled via the escalate_to_conscious flag
+        (set by immune.py for critical threats, OR-preserved by subconscious).
+        The previous threat_action == "escalate" gate was removed in D016 —
+        no system produced that action value.
         """
         field = state["field"]
         signal_report = state["signal_report"]
@@ -221,23 +225,22 @@ class ConsciousSystem(BaseSystem):
             "threat_action": threat_action,
         }
 
-        # 1. Immune override — always proceed.
-        if threat_action == "escalate":
-            return {**base_eval, "proceed": True, "reason": "immune_override"}
-
-        # 2. Areka suppression.
+        # 1. Ārēka suppression.
+        # Ārēka defense-in-depth: conscious threshold (0.7) is higher than codec (0.3)
+        # because suppressing deliberation (LLM call) is a stronger action.
+        # See also: text_codec.py Ārēka suppression.
         if areka_w > 0.7 and signal_classification == "noise":
             return {**base_eval, "proceed": False, "reason": "areka_suppression"}
 
-        # 3. Nivrtti pause.
+        # 2. Nivrtti pause.
         if nivrtti_w > 0.7 and aggregate_deviation < 0.5:
             return {**base_eval, "proceed": False, "reason": "nivrtti_pause"}
 
-        # 4. Resting stance.
+        # 3. Resting stance.
         if resting_stance > 0.8 and aggregate_deviation < 0.3:
             return {**base_eval, "proceed": False, "reason": "resting_stance_suppression"}
 
-        # 5. Default — proceed.
+        # 4. Default — proceed.
         return {**base_eval, "proceed": True, "reason": "default_proceed"}
 
     def _compute_active_limbs(self, field: dict) -> list[dict]:

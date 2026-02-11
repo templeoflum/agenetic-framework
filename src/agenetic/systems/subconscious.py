@@ -38,6 +38,15 @@ def _euclidean_distance(a: list[float], b: list[float]) -> float:
     return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
 
 
+def _normalize_vector(v: list[float]) -> list[float]:
+    """Normalize feature vector for distance computation.
+
+    Only entropy (index 1) needs rescaling: divide by 10.0, cap at 1.0.
+    Other features are already in [0, 1] range.
+    """
+    return [v[0], min(v[1] / 10.0, 1.0), v[2], v[3], v[4], v[5]]
+
+
 def _default_output() -> SubconsciousOutput:
     """Default "no recommendation" output."""
     return {
@@ -84,8 +93,10 @@ class SubconsciousSystem(BaseSystem):
         matched_outcomes: list[str] = []
         primed_associations: list[str] = []
 
+        norm_current = _normalize_vector(current_vector)
         for pattern in cache:
-            dist = _euclidean_distance(current_vector, pattern["feature_vector"])
+            norm_pattern = _normalize_vector(pattern["feature_vector"])
+            dist = _euclidean_distance(norm_current, norm_pattern)
             if dist < MATCH_THRESHOLD:
                 matched_ids.append(pattern["input_hash"])
                 matched_outcomes.append(pattern["outcome"])
@@ -125,12 +136,10 @@ class SubconsciousSystem(BaseSystem):
             escalation_recommended = False
             escalation_confidence = 0.5
 
-        # --- Update flags ---
+        # --- Update flags (OR-preserve: upstream True signals survive) ---
         flags = {**state["flags"]}
-        if escalation_recommended:
-            flags["escalate_to_conscious"] = True
-        else:
-            flags["escalate_to_conscious"] = False
+        existing = state["flags"].get("escalate_to_conscious", False)
+        flags["escalate_to_conscious"] = existing or escalation_recommended
 
         # --- Update cache ---
         outcome = "escalated" if escalation_recommended else "reflex_response"
@@ -159,6 +168,15 @@ class SubconsciousSystem(BaseSystem):
                 "last_seen_tick": tick,
             }
             cache.append(new_entry)
+
+        # --- Prune stale single-encounter entries ---
+        indices_to_remove = [
+            i for i, entry in enumerate(cache)
+            if entry["encounter_count"] == 1
+            and (tick - entry["last_seen_tick"]) > 100
+        ]
+        for i in reversed(indices_to_remove):
+            del cache[i]
 
         output: SubconsciousOutput = {
             "escalation_recommended": escalation_recommended,

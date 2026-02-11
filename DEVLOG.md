@@ -576,10 +576,33 @@ Two tests updated for the new default:
 
 ---
 
+## 2026-02-10 — Directive 015: Full Audit Phase
+
+**Tests:** 320 passing + 2 skipped (no change — zero code modifications)
+
+Mechanical audit (DNAgent) inventoried all 16 source files, 9 test files, 83 hardcoded thresholds. Conceptual audit (fresh adversarial instance) evaluated findings. Reports at `handoff/015_mechanical_audit_report.md` and `handoff/015_conceptual_audit_report.md`.
+
+---
+
+## 2026-02-10 — Directive 016: Audit Remediation
+
+**Tests:** 336 passing + 2 skipped (16 new)
+
+Addressed six findings from the D015 audit phase:
+- Subconscious cache pruning (LRU, prevents 10K apoptosis time bomb)
+- Escalation flag OR-preservation (upstream signals no longer erased)
+- Immune escalation connection (critical threats now set escalation flag)
+- Feature vector normalization (entropy no longer dominates distance)
+- Ārēka threshold documented as defense-in-depth
+- Māyāvāda activation condition inverted (high humility now constrains)
+
+Deferred: tautological confirmation pattern (needs motor redesign),
+dormant gate and convergent cluster (need sleep implementation).
+
+---
+
 ## What's Next
 
-Integration is complete. Next directives:
+Audit remediation complete. Next directives:
 
-- **015 — Mechanical audit** — DNAgent reads everything, reports raw. Zero code changes.
-- **016 — Conceptual audit** — Fresh planning instance, adversarial posture. Key question: prompt assembly theater or genuine expression?
-- **017 — Remediation.**
+- **017 — Sleep implementation** — First meta-domain system. Unblocks dormant gate + convergent cluster findings.

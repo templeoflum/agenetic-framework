@@ -110,22 +110,23 @@ def _make_conscious_state(
 class TestGateLogic:
     """Tests for the proceed/suppress gate. All use deliberator=None."""
 
-    def test_gate_immune_override_always_proceeds(self):
-        """Immune escalation overrides all suppression conditions."""
+    def test_gate_areka_suppresses_even_with_critical_threat(self):
+        """Areka suppression takes priority — immune override gate removed in D016."""
         system = ConsciousSystem(deliberator=None)
-        # Set conditions that would normally suppress (high Areka + noise).
+        # High Areka + noise → Areka suppression wins.
+        # Immune escalation is now handled via the escalate_to_conscious flag
+        # at the routing level, not via a gate check.
         state = _make_conscious_state(
             field_overrides={8: 0.9},  # Areka high
             signal_type="noise",
             aggregate_deviation=0.2,
-            threat_action="escalate",
-            threat_level="high",
+            threat_action="reject",
+            threat_level="critical",
         )
         result = system.process(state)
         output = result["conscious_output"]
-        # Gate should proceed because immune override takes priority.
-        assert output["lineage"]["gate_evaluation"]["proceed"] is True
-        assert output["lineage"]["gate_evaluation"]["reason"] == "immune_override"
+        assert output["lineage"]["gate_evaluation"]["proceed"] is False
+        assert output["lineage"]["gate_evaluation"]["reason"] == "areka_suppression"
 
     def test_gate_areka_suppresses_noise(self):
         """High Areka weight + noise classification = suppress."""
@@ -213,19 +214,19 @@ class TestGateLogic:
         assert gate["reason"] == "default_proceed"
 
     def test_gate_priority_order(self):
-        """Immune override beats Areka suppression."""
+        """Areka suppression beats Nivrtti pause when both conditions met."""
         system = ConsciousSystem(deliberator=None)
         state = _make_conscious_state(
-            field_overrides={8: 0.9},  # Areka would suppress noise
+            field_overrides={8: 0.9, 3: 0.9},  # Both Areka and Nivrtti high
             signal_type="noise",
-            threat_action="escalate",  # But immune override wins
-            threat_level="critical",
+            aggregate_deviation=0.2,  # Low deviation (Nivrtti would pause)
         )
         result = system.process(state)
         output = result["conscious_output"]
         gate = output["lineage"]["gate_evaluation"]
-        assert gate["proceed"] is True
-        assert gate["reason"] == "immune_override"
+        # Areka suppression is priority 1, Nivrtti pause is priority 2.
+        assert gate["proceed"] is False
+        assert gate["reason"] == "areka_suppression"
 
 
 # ============================================================

@@ -1,18 +1,18 @@
 # Current State
 
-**Last updated:** 2026-02-10 (post-Directive 015a)
-**Tests:** 320 passing + 2 skipped (unchanged from D014)
-**Last directive:** 015a — Audit Artifact Cleanup (015 = mechanical audit, 015a = artifact separation + conceptual audit commit)
+**Last updated:** 2026-02-10 (post-Directive 016)
+**Tests:** 336 passing + 2 skipped
+**Last directive:** 016 — Audit Remediation (6 targeted fixes from D015 audit phase)
 
 ## System Status
 
 | System | Status | Tests |
 |---|---|---|
 | Sensory | Implemented (~390 LOC) | 23 (test_systems) + contributions to test_graph, test_round_trip, test_integration |
-| Immune | Implemented (210 LOC) | 18 (test_systems) + contributions to test_graph, test_integration |
-| Subconscious | Implemented (188 LOC) | 17 (test_systems) + contributions to test_graph, test_integration |
-| Conscious | Foundation (~440 LOC + ~100 LOC deliberator + ~380 LOC prompt assembly) | 7 (test_systems) + 30 (test_conscious) + 1 (test_graph) + 24 (test_prompt_assembly) + contributions to test_integration |
-| Motor | Integrated (~189 LOC orchestrator + ~55 LOC codec.py + ~430 LOC text_codec.py) | 7 (test_systems) + 58 (test_motor) + 44 (test_round_trip) + 12 (test_codec) + contributions to test_integration |
+| Immune | Implemented (~213 LOC) — now sets escalation flag for critical threats | 18 (test_systems) + 3 (test_immune) + contributions to test_graph, test_integration |
+| Subconscious | Implemented (~200 LOC) — cache pruning, OR-preserve flags, normalized distance | 17 (test_systems) + 11 (test_subconscious) + contributions to test_graph, test_integration |
+| Conscious | Foundation (~435 LOC + ~100 LOC deliberator + ~380 LOC prompt assembly) — dead code removed, Areka documented | 7 (test_systems) + 32 (test_conscious) + 1 (test_graph) + 24 (test_prompt_assembly) + contributions to test_integration |
+| Motor | Integrated (~189 LOC orchestrator + ~55 LOC codec.py + ~440 LOC text_codec.py) — Mayavada inversion fixed, Areka documented | 7 (test_systems) + 58 (test_motor) + 44 (test_round_trip) + 14 (test_codec) + contributions to test_integration |
 | Sleep | Stub (pass-through, has WRITE_TOKEN) | 7 (parametrized interface only) |
 | Genetic | Stub (pass-through) | 7 (parametrized interface only) |
 
@@ -25,37 +25,30 @@
 | test_prompt_assembly.py | 24 | Intensity (4), individual instructions (4), interactions (6), resting stance (5), full assembly (3), regression (2) |
 | test_motor.py | 58 | Motor unit tests (strategies, determinism, field sensitivity, repair) |
 | test_round_trip.py | 44 | Motor-sensory feedback loop, calibration sweep, multi-input surface |
-| test_codec.py | 12 | Protocol conformance (3), equivalence (4), quality check (2), motor delegation (3) |
+| test_codec.py | 14 | Protocol conformance (3), equivalence (4), quality check (2), Mayavada (2), motor delegation (3) |
 | test_integration.py | 16 | End-to-end paths: reflex (4), escalated (4), suppression (3), routing (3), cross-path (2) |
 | test_graph.py | 18 | LangGraph compilation, routing, signal-domain flow |
 | test_topology.py | 24 | Connection matrix verification |
+| test_subconscious.py | 11 | Cache pruning (4), flag OR-preservation (3), feature normalization (4) |
+| test_immune.py | 3 | Critical threat escalation flag (1), non-critical no flag (1), immune+subconscious integration (1) |
 
-## Audit Phase Complete (D015 + D015a)
+## D016 Remediation Summary
 
-### Mechanical Audit (D015)
-Full codebase inventory: 16 source files, 9 test files, ~7,094 LOC, 83 hardcoded thresholds, 75 numbered observations. Zero code changes.
-- Report: `handoff/015_mechanical_audit_report.md`
+Six audit findings addressed:
 
-### Conceptual Audit (produced by fresh planning instance)
-Adversarial evaluation of architecture claims, limb mappings, threshold quality, and implementation gaps. 7 critical findings, 5 strengths, 10 recommendations.
-- Report: `handoff/015_conceptual_audit_report.md`
+| # | Finding | Fix | Status |
+|---|---|---|---|
+| 1 | Cache time bomb (10K apoptosis) | LRU pruning: encounter_count=1 + >100 ticks stale | Fixed |
+| 2 | Escalation flag overwrite | OR-preserve: `existing or escalation_recommended` | Fixed |
+| 3 | Immune escalation dead code | Critical threats set flag; dead gate code removed | Fixed |
+| 4 | Feature vector normalization | Entropy /10.0 cap at 1.0 for distance only | Fixed |
+| 5 | Areka threshold undocumented | Defense-in-depth comments + ARCHITECTURE.md note | Fixed |
+| 6 | Mayavada inversion | Activation `< 0.45` → `> 0.55` (high humility constrains) | Fixed |
 
-### Key Audit Findings (triage for remediation directive)
-**Must fix:**
-1. Subconscious cache grows without pruning — apoptotic at 10,001 entries (time bomb)
-2. Escalation flag overwrite — subconscious unconditionally overwrites immune's escalation signal
-3. Immune override dead code — conscious gate checks for "escalate" action no system produces
-
-**Should fix:**
-4. Mayavada inversion — high weight = no constraint (semantically backwards)
-5. Areka threshold inconsistency — 0.3 in codec vs 0.7 in conscious gate (undocumented rationale)
-6. Feature vector normalization — entropy dominates Euclidean distance matching
-7. Limb 14 naming — "Nivrtti-Rest" vs "Rest-as-Realization" inconsistency
-
-**Watch:**
-8. Tautological motor strategies — 5/6 strategies manipulate what sensors measure
-9. Convergent cluster decorative alone — 5 limbs individually inert at any weight
-10. Dormant gate — all suppression paths require weights sleep can't yet modify
+**Deferred (need sleep implementation or motor redesign):**
+- Tautological confirmation pattern (5/6 motor strategies)
+- Dormant gate (suppression paths need weight modification)
+- Convergent cluster decoration (5 limbs individually inert)
 
 ## Three Routing Paths
 
@@ -83,6 +76,9 @@ All 18 Asparsa limbs at 0.5 midpoint. Per-feature reference formulas unchanged f
 - Orientational field: 18 Asparsa limbs at 0.5 midpoint, read by all systems, write restricted to SleepSystem.WRITE_TOKEN
 - LangGraph routing: sensory → immune → subconscious → conditional (escalate → conscious → motor, else → motor)
 - Conditional escalation: subconscious drives routing based on deviation, threat, and pattern history
+- Escalation flag OR-preserved: immune (critical) and subconscious both contribute, neither erases
+- Cache pruning: stale single-encounter entries removed every cycle (encounter_count=1, >100 ticks old)
+- Feature normalization: entropy /10.0 capped at 1.0 for distance computation (cached values unchanged)
 - Round-trip calibration: motor → sensory feedback loop, multi-input surface (5 inputs x 18 limbs x 2 weights = 180 points)
 - Connection matrix: 17 primary (weight 1.0) + 6 secondary (weight 0.5), 3 absent connections enforced
 - Shared target profile in base.py (sensory + motor import same function)
@@ -90,6 +86,8 @@ All 18 Asparsa limbs at 0.5 midpoint. Per-feature reference formulas unchanged f
 - Prompt assembly: extracted module, graduated intensity, limb interactions, observation harness
 - Codec protocol: structural typing, swappable codecs (TextCodec first implementation)
 - Conscious-motor integration: suppression propagation, strategy metadata recording
+- Areka defense-in-depth: 0.3 in codec (outer gate), 0.7 in conscious (inner gate), documented
+- Mayavada: high humility (> 0.55) constrains transformation; low humility unconstrained
 
 ## Active Blockers
 
@@ -97,4 +95,4 @@ All 18 Asparsa limbs at 0.5 midpoint. Per-feature reference formulas unchanged f
 
 ## Next Directive Candidates
 
-- **016 — Remediation** — Address must-fix items from audit (cache pruning, escalation flag, immune override dead code) plus low-cost should-fix items.
+- **017 — Sleep implementation** — First meta-domain system. Unblocks dormant gate + convergent cluster findings.

@@ -146,12 +146,12 @@ class TestCodecEquivalence:
         assert result["transform_magnitude"] == 1.0
 
     def test_encode_mayavada_cap(self):
-        """Mayavada < 0.45 → transform_magnitude bounded by max_allowed."""
+        """Mayavada > 0.55 → transform_magnitude bounded by max_allowed."""
         codec = TextCodec()
-        # Mayavada at 0.44 → max_allowed = 0.56. Cap is active.
-        # At default 0.5 → cap is NOT active (>= 0.45).
+        # Mayavada at 0.56 → max_allowed = 0.44. Cap is active (high humility constrains).
+        # At default 0.5 → cap is NOT active (<= 0.55).
         from agenetic.systems.base import KSETRA_JNANA_ID as KJ_ID
-        field_capped = _make_field({MAYAVADA_ID: 0.44, KJ_ID: 1.0})
+        field_capped = _make_field({MAYAVADA_ID: 0.56, KJ_ID: 1.0})
         field_uncapped = _make_field({MAYAVADA_ID: 0.5, KJ_ID: 1.0})
         features = _make_features(coherence=0.9, impedance=0.0)
         target = _make_features(coherence=0.1, impedance=0.5)
@@ -159,8 +159,8 @@ class TestCodecEquivalence:
         result_capped = codec.encode(SAMPLE_TEXT, features, target, field_capped.read())
         result_uncapped = codec.encode(SAMPLE_TEXT, features, target, field_uncapped.read())
 
-        # Capped magnitude should be <= max_allowed (0.56) or unmodified if already below.
-        max_allowed = 1.0 - 0.44
+        # Capped magnitude should be <= max_allowed (0.44) or unmodified if already below.
+        max_allowed = 1.0 - 0.56
         assert result_capped["transform_magnitude"] <= max_allowed + 0.01
         # Uncapped should have no Mayavada constraint.
         assert "mayavada_cap" not in result_uncapped["strategies_applied"]
@@ -172,6 +172,27 @@ class TestCodecEquivalence:
 
 
 class TestCodecQualityCheck:
+
+    def test_mayavada_high_humility_constrains(self):
+        """High humility (weight 0.8) → cap active, max_allowed = 0.2."""
+        codec = TextCodec()
+        from agenetic.systems.base import KSETRA_JNANA_ID as KJ_ID
+        field = _make_field({MAYAVADA_ID: 0.8, KJ_ID: 1.0})
+        features = _make_features(coherence=0.9, impedance=0.0)
+        target = _make_features(coherence=0.1, impedance=0.5)
+        result = codec.encode(SAMPLE_TEXT, features, target, field.read())
+        max_allowed = 1.0 - 0.8  # 0.2
+        assert result["transform_magnitude"] <= max_allowed + 0.01
+
+    def test_mayavada_low_humility_unconstrained(self):
+        """Low humility (weight 0.3) → cap inactive, no restraint."""
+        codec = TextCodec()
+        from agenetic.systems.base import KSETRA_JNANA_ID as KJ_ID
+        field = _make_field({MAYAVADA_ID: 0.3, KJ_ID: 1.0})
+        features = _make_features(coherence=0.9, impedance=0.0)
+        target = _make_features(coherence=0.1, impedance=0.5)
+        result = codec.encode(SAMPLE_TEXT, features, target, field.read())
+        assert "mayavada_cap" not in result["strategies_applied"]
 
     def test_quality_check_passes(self):
         """Normal input/output pair passes quality check."""
