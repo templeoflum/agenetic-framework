@@ -1,8 +1,8 @@
 # Current State
 
-**Last updated:** 2026-02-10 (post-Directive 014)
-**Tests:** 320 passing + 2 skipped (was 304, +16 integration tests)
-**Last directive:** 014 — Integration: Conditional Escalation, Conscious-Motor Wiring
+**Last updated:** 2026-02-10 (post-Directive 015a)
+**Tests:** 320 passing + 2 skipped (unchanged from D014)
+**Last directive:** 015a — Audit Artifact Cleanup (015 = mechanical audit, 015a = artifact separation + conceptual audit commit)
 
 ## System Status
 
@@ -30,26 +30,32 @@
 | test_graph.py | 18 | LangGraph compilation, routing, signal-domain flow |
 | test_topology.py | 24 | Connection matrix verification |
 
-## Changes in Directive 014
+## Audit Phase Complete (D015 + D015a)
 
-### Conditional escalation (Part A)
-`create_default_state()` now sets `escalate_to_conscious=False`. Subconscious drives escalation. Inputs with low deviation and no threat take the reflex path (sensory → immune → subconscious → motor). High-deviation or threat inputs escalate to conscious.
+### Mechanical Audit (D015)
+Full codebase inventory: 16 source files, 9 test files, ~7,094 LOC, 83 hardcoded thresholds, 75 numbered observations. Zero code changes.
+- Report: `handoff/015_mechanical_audit_report.md`
 
-### Subconscious explicit flag reset (Part C)
-Subconscious now explicitly sets `escalate_to_conscious=False` when not recommending escalation. Defense-in-depth against stale flags.
+### Conceptual Audit (produced by fresh planning instance)
+Adversarial evaluation of architecture claims, limb mappings, threshold quality, and implementation gaps. 7 critical findings, 5 strengths, 10 recommendations.
+- Report: `handoff/015_conceptual_audit_report.md`
 
-### Conscious-motor wiring (Part B)
-Motor checks `conscious_output` before codec delegation:
-- Suppression: conscious proceed=False → motor outputs empty with `["conscious_suppression"]`
-- Proceed: motor records `conscious_strategy` metadata from conscious decision
-- Reflex: conscious_output is None → motor behavior unchanged
+### Key Audit Findings (triage for remediation directive)
+**Must fix:**
+1. Subconscious cache grows without pruning — apoptotic at 10,001 entries (time bomb)
+2. Escalation flag overwrite — subconscious unconditionally overwrites immune's escalation signal
+3. Immune override dead code — conscious gate checks for "escalate" action no system produces
 
-### Integration tests (Part D)
-16 end-to-end tests verifying three routing paths through the full graph.
+**Should fix:**
+4. Mayavada inversion — high weight = no constraint (semantically backwards)
+5. Areka threshold inconsistency — 0.3 in codec vs 0.7 in conscious gate (undocumented rationale)
+6. Feature vector normalization — entropy dominates Euclidean distance matching
+7. Limb 14 naming — "Nivrtti-Rest" vs "Rest-as-Realization" inconsistency
 
-### Test fixes (Part D1)
-- `test_escalation_flag_never_unset` → `test_escalation_flag_explicitly_reset` (behavior changed)
-- `test_graph_conscious_output_flows_to_motor` input changed to naturally trigger escalation
+**Watch:**
+8. Tautological motor strategies — 5/6 strategies manipulate what sensors measure
+9. Convergent cluster decorative alone — 5 limbs individually inert at any weight
+10. Dormant gate — all suppression paths require weights sleep can't yet modify
 
 ## Three Routing Paths
 
@@ -91,6 +97,4 @@ All 18 Asparsa limbs at 0.5 midpoint. Per-feature reference formulas unchanged f
 
 ## Next Directive Candidates
 
-- **015 — Mechanical audit** — DNAgent reads everything, reports raw. Zero code changes.
-- **016 — Conceptual audit** — Fresh planning instance, adversarial posture.
-- **017 — Remediation.**
+- **016 — Remediation** — Address must-fix items from audit (cache pruning, escalation flag, immune override dead code) plus low-cost should-fix items.
